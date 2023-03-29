@@ -38,27 +38,37 @@ public class CustomHeuristics
 			return numPiecesWeAreThreatening;
 		}
 		
-//		public static double weCheck(DFSTreeNode node)
-//		{
-//			// We check if in this state if the opponent is in check and if they are assign a high heuristic value
-//			Player EnemyPlayer = node.getGame().getOtherPlayer();
-//			Piece EnemyKing = node.getGame().getBoard().getPieces(EnemyPlayer, PieceType.KING).iterator().next();
-//			
-//			for(Piece enemyPiece : node.getGame().getBoard().getPieces(node.getGame().getOtherPlayer(player)))
-//			{
-//				for(Move captureMove : enemyPiece.getAllCaptureMoves(node.getGame()))
-//				{
-//					if(((CaptureMove)captureMove).getTargetPieceID() == EnemyKing.getPieceID() &&
-//							((CaptureMove)captureMove).getTargetPlayer() == EnemyPlayer)
-//					{
-//						return 30.0;
-//					}
-//				}
-//			}
-//			
-//			return 0.0;
-//				
-//		}
+		public static double weCheck(DFSTreeNode node)
+		{
+			// We check if in this state if the opponent is in check and if they are assign a high heuristic value
+			
+			boolean enemyIsInCheck = false;
+			
+			Player EnemyPlayer = node.getGame().getOtherPlayer();
+			Piece EnemyKing = node.getGame().getBoard().getPieces(EnemyPlayer, PieceType.KING).iterator().next();
+			
+			for(Piece enemyPiece : node.getGame().getBoard().getPieces(node.getGame().getOtherPlayer(EnemyPlayer)))
+			{
+				for(Move captureMove : enemyPiece.getAllCaptureMoves(node.getGame()))
+				{
+					if(((CaptureMove)captureMove).getTargetPieceID() == EnemyKing.getPieceID() &&
+							((CaptureMove)captureMove).getTargetPlayer() == EnemyPlayer)
+					{
+						enemyIsInCheck = true;
+						System.out.println("enemy is In Check");
+						
+					}
+				}
+			}
+			
+			if (enemyIsInCheck) {
+				return 15.0;
+			} 
+			
+			return 0.0;
+
+			
+		}
 
 	}
 
@@ -136,9 +146,9 @@ public class CustomHeuristics
 		// offense can typically include the number of pieces that our pieces are currently threatening
 		int numPiecesWeAreThreatening = OffensiveHeuristics.getNumberOfPiecesWeAreThreatening(node);
 		
-//		double weCheck = OffensiveHeuristics.weCheck(node);
+		double weCheck = OffensiveHeuristics.weCheck(node);
 
-		return damageDealtInThisNode + numPiecesWeAreThreatening;
+		return damageDealtInThisNode + numPiecesWeAreThreatening + weCheck;
 	}
 
 	public static double getDefensiveHeuristicValue(DFSTreeNode node)
