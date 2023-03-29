@@ -148,6 +148,38 @@ public class CustomHeuristics
 		return multiPieceValueTotal;
 	}
 	
+	public static double piecesWeThreaten(DFSTreeNode node)
+	{
+		/*** Higher heuristic value if we are threatening more valuable pieces
+		 *   For Ex:
+		 *   	Pawn: 1
+		 *   	Bishop/Knight: 3
+		 *   	Rook: 5
+		 *   	Queen: 9
+		 */
+		
+		// Create a list of capture moves and then go through each
+		
+		List<Move> captureMove;
+		
+		for(Piece piece : node.getGame().getBoard().getPieces(node.getGame().getCurrentPlayer()))
+		{
+			captureMove = piece.getAllCaptureMoves(node.getGame());
+			System.out.println(captureMove);
+			CaptureMove(attkPieceID=8, attkPlayer=Player(type=BLACK, id=0), tgtPieceID=15, tgtPlayer=Player(type=WHITE, id=1))] // this is what gets printed, now we need targetPieceID
+					// CaptureMove class has get targetId
+					// after we get pieceId how do we get the pieceType???
+		}
+		
+		
+		return 0.0;
+		
+		
+		
+		
+	}
+	
+	
 	public static double piecesWeControl(DFSTreeNode node)
 	{
 		// checks what how many piece we control and what type of pieces they are and compare them to our opponent
@@ -159,7 +191,6 @@ public class CustomHeuristics
 		
 		for (Piece piece1: OurPieces) { // Loops through our pieces and see what type they are 
 			PieceType OurPieceType = piece1.getType();
-			System.out.println(OurPieceType);
 			switch(OurPieceType)
 			{
 			case PAWN:
@@ -183,8 +214,7 @@ public class CustomHeuristics
 		}
 		
 		for (Piece piece2: OpponentPieces) { // Loops through our pieces and see what type they are 
-			PieceType OpponentPieceType = piece2.getType();
-			System.out.println(OpponentPieceType);
+			PieceType OpponentPieceType = piece2.getType();;
 			switch(OpponentPieceType)
 			{
 			case PAWN:
@@ -207,10 +237,6 @@ public class CustomHeuristics
 			}
 		}
 		
-		System.out.println(ourVal + " Our Value");
-		System.out.println(opponentVal + " Opponent Val");
-		
-		
 		double val = ourVal - opponentVal;
 				
 		return val;
@@ -225,40 +251,85 @@ public class CustomHeuristics
 	
 	public static double centerControl(DFSTreeNode node) {
 		/**
-		 * Checks player pieces and how many are close to the center then add points
+		 * Checks player pieces and how close they are from the center and add points based on a square.
+		 * For example the points would be distributed as so:
+		 * 					0 0 0 0 0 0 0 0 
+		 * 					0 1 1 1 1 1 1 0
+		 * 					0 1 2 2 2 2 1 0
+		 * 					0 1 2 3 3 2 1 0
+		 * 					0 1 2 3 3 2 1 0
+		 * 					0 1 2 2 2 2 1 0
+		 * 					0 1 1 1 1 1 1 0
+		 * 					0 0 0 0 0 0 0 0
+		 * 
 		 */
 		double value = 0.0;
 				
-		Set<Piece> OurPieces = node.getGame().getBoard().getPieces(node.getGame().getCurrentPlayer()); 
-		Set<Piece> OpponentPieces =node.getGame().getBoard().getPieces(node.getGame().getOtherPlayer());
-		Set<Coordinate> center = new HashSet<>((Arrays.asList(
-		        new Coordinate(5, 5),
+		Set<Piece> Pieces = node.getGame().getBoard().getPieces(node.getGame().getCurrentPlayer()); 
+		
+		Set<Coordinate> OnePoint = new HashSet<>((Arrays.asList( // This is the coordinate for the ones with one points
+				new Coordinate(2, 2),
+				new Coordinate(2, 3),
+				new Coordinate(2, 4),
+				new Coordinate(2, 5),
+				new Coordinate(2, 6),
+				new Coordinate(2, 7),
+				new Coordinate(3, 2),
+				new Coordinate(4, 2),
+				new Coordinate(5, 2),
+				new Coordinate(6, 2),
+				new Coordinate(7, 2),
+				new Coordinate(7, 3),
+				new Coordinate(7, 4),
+				new Coordinate(7, 5),
+				new Coordinate(7, 6),
+				new Coordinate(7, 7),
+				new Coordinate(3, 7),
+				new Coordinate(4, 7),
+				new Coordinate(5, 7),
+				new Coordinate(6, 7)
+				))); 		
+		
+		
+		Set<Coordinate> TwoPoint = new HashSet<>((Arrays.asList( // This is the coordinate for the ones with two points
+				new Coordinate(3, 3),
+				new Coordinate(3, 4),
+				new Coordinate(3, 5),
+				new Coordinate(3, 6),
+				new Coordinate(4, 3),
+				new Coordinate(5, 3),
+				new Coordinate(6, 3),
+				new Coordinate(6, 4),
+				new Coordinate(6, 5),
+				new Coordinate(6, 6),
+				new Coordinate(4, 6),
+				new Coordinate(5, 6)
+				
+				))); 
+		
+		Set<Coordinate> ThreePoint = new HashSet<>((Arrays.asList( // This is the coordinate for the ones with three points
+				new Coordinate(5, 5),
 		        new Coordinate(5, 4),
 		        new Coordinate(4, 5),
 		        new Coordinate(4, 4)
-		    )));
-		
-		for (Coordinate square: center) {
-			Piece pieces = node.getGame().getBoard().getPieceAtPosition(square);
-			if (pieces == null) {
-				value += 1.0; // If no pieces in the center we add points to encourage pieces to move there
-			}
-		}
+				))); 
 		
 		
-		for (Piece piece: OurPieces) // if we control the center add points
+		for (Piece piece: Pieces) // We iterate through each piece and get their location and if the set contains that piece location then we add point accordingly
 		{
 			Coordinate piecePos = node.getGame().getCurrentPosition(piece);
-			if (center.contains(piecePos)) {
+			
+//			System.out.println(piecePos + " Position of Piece");
+//			System.out.println(OnePoint.contains(piecePos) + " One point");
+//			System.out.println(TwoPoint.contains(piecePos) + " Two point");
+//			System.out.println(ThreePoint.contains(piecePos) + " Three point");
+			
+			if (OnePoint.contains(piecePos)) {
 				value += 1.0;
-			}
-		}
-		
-		for (Piece piece: OpponentPieces) // if opponent control the center subtract points
-		{
-			Coordinate piecePos = node.getGame().getCurrentPosition(piece);
-			if (center.contains(piecePos)) {
-				value -= 1.0; 
+			} else if (TwoPoint.contains(piecePos)) {
+				value += 2.0;
+			} else if (ThreePoint.contains(piecePos)) {
+				value += 3.0;
 			}
 		}
 		
@@ -343,8 +414,8 @@ public class CustomHeuristics
 		double defenseHeuristicValue = getDefensiveHeuristicValue(node);
 		double nonlinearHeuristicValue = getNonlinearPieceCombinationHeuristicValue(node);
 
-		return offenseHeuristicValue + defenseHeuristicValue + nonlinearHeuristicValue + centerControl(node) 
-		+ pieceDevelopment(node) + piecesWeControl(node);
+		
+		return offenseHeuristicValue + defenseHeuristicValue + nonlinearHeuristicValue + centerControl(node) + piecesWeControl(node) + piecesWeThreaten(node);
 	}
 
 }
