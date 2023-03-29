@@ -87,14 +87,16 @@ public class AlphaBetaAgent extends ChessAgent
 							bestChild = child;
 						}
 						
-						alpha = Math.max(alpha, bestUtilityValue);
-						
-						if (alpha >= beta) { // Prune tree
+						if (bestUtilityValue >= beta) { // Prune tree
 							break;
 						}
+						
+						alpha = Math.max(alpha, bestUtilityValue);
+						
+						
 					}
 					
-					node.setMaxPlayerHeuristicValue(bestUtilityValue);
+				
 					
 				} else // Min player
 				{
@@ -108,15 +110,14 @@ public class AlphaBetaAgent extends ChessAgent
 							bestChild = child;
 						}
 						
-						beta = Math.min(beta, bestUtilityValue);
-						
-						if (alpha >= beta) { // Prune tree
+						if (bestUtilityValue <= alpha) { // Prune tree
 							break;
 						}
+						
+						beta = Math.min(beta, bestUtilityValue);
+						
 					}
 					
-					
-					node.setMaxPlayerHeuristicValue(bestUtilityValue);
 				}
 				
 			}
