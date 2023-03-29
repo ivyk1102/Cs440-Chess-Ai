@@ -366,34 +366,71 @@ public class CustomHeuristics
 	     * Evaluates if a piece has moved yet and if we have more pieces moved than our opponent we add points to our state
 	     */
 	    
-	    double weMoved = 0.0;
-	    double opponentMoved = 0.0;
+	    double val = 0.0;
+
 	    
 
 	    Set<Piece> ourPieces = node.getGame().getBoard().getPieces(node.getGame().getCurrentPlayer());
-	    Set<Piece> opponentPieces = node.getGame().getBoard().getPieces(node.getGame().getOtherPlayer());
-	    Player Enemy = node.getGame().getOtherPlayer();
 	    Player Us = node.getGame().getCurrentPlayer();
 	    
 	    for (Piece piece: ourPieces)
 	    {
-	    	List<Move> PieceMoved = node.getGame().getAllMovesForPiece(Us, piece);
-	    	if (PieceMoved.isEmpty() == false) {
-	    		weMoved += 1.0;
-	    	}
+	    	
+	    	List<Move> PieceMoved= node.getGame().getAllMovesForPiece(Us, piece);
+	    	PieceType PieceType = piece.getType();
+	    	
+//	    	if (PieceMoved.isEmpty() == false) {
+//	    		val += 1;
+//	    	} else {
+//	    		val -= 1;
+//	    	}
+	    	
+			switch(PieceType)
+			{
+			case PAWN:
+				if (PieceMoved.isEmpty() == false) {
+		    		val += 1.0;
+		    	} else {
+		    		val -= 1.0;
+		    	}
+				break;
+			case BISHOP:
+				if (PieceMoved.isEmpty() == false) {
+		    		val += 3.0;
+		    	} else {
+		    		val -= 3.0;
+		    	}
+				break;
+			case KNIGHT:
+				if (PieceMoved.isEmpty() == false) {
+		    		val += 3.0;
+		    	} else {
+		    		val -= 3.0;
+		    	}
+				break;
+			case QUEEN:
+				if (PieceMoved.isEmpty() == false) {
+		    		val += 9.0;
+		    	} else {
+		    		val -= 9.0;
+		    	}
+				break;
+			case ROOK:
+				if (PieceMoved.isEmpty() == false) {
+		    		val += 5.0;
+		    	} else {
+		    		val -= 5.0;
+		    	}
+				break;
+			case KING:
+				break;
+			}
 	    }
 	    
-	    for (Piece piece: opponentPieces)
-	    {
-	    	List<Move> PieceMoved = node.getGame().getAllMovesForPiece(Enemy, piece);
-	    	if (PieceMoved.isEmpty() == false) {
-	    		opponentMoved += 1.0;
-	    	}
-	    }
 	    
-	    double value = weMoved - opponentMoved;
 	    
-	    return value;
+	    
+	    return val;
 	
 	}
 	
@@ -402,9 +439,8 @@ public class CustomHeuristics
 		double offenseHeuristicValue = getOffensiveHeuristicValue(node);
 		double defenseHeuristicValue = getDefensiveHeuristicValue(node);
 		double nonlinearHeuristicValue = getNonlinearPieceCombinationHeuristicValue(node);
-
 		
 		return offenseHeuristicValue + defenseHeuristicValue + nonlinearHeuristicValue + centerControl(node) + piecesWeControl(node) + pieceDevelopment(node);
 	}
-
+	
 }

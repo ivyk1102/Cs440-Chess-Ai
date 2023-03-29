@@ -65,9 +65,10 @@ public class AlphaBetaAgent extends ChessAgent
 			if (node.isTerminal()) // terminal state!
 			{
 				bestChild = node;
+				
 			} else if (depth <= 0) // reached the bottom!
 			{
-				node.setMaxPlayerHeuristicValue(CustomHeuristics.getHeuristicValue(node));
+				node.setMaxPlayerUtilityValue(CustomHeuristics.getHeuristicValue(node));
 				bestChild = node;
 			} else // get the children of this  
 			{
@@ -75,7 +76,7 @@ public class AlphaBetaAgent extends ChessAgent
 				
 				double bestUtilityValue;
 				
-				if(node.getType() == DFSTreeNodeType.MAX) // Max player (US)
+				if(node.getType() == DFSTreeNodeType.MAX) // Max player 
 				{
 					bestUtilityValue = Double.NEGATIVE_INFINITY;
 					
@@ -93,9 +94,11 @@ public class AlphaBetaAgent extends ChessAgent
 						
 						alpha = Math.max(alpha, bestUtilityValue);
 						
+					
 						
 					}
 					
+					return bestChild;
 				
 					
 				} else // Min player
@@ -116,7 +119,9 @@ public class AlphaBetaAgent extends ChessAgent
 						
 						beta = Math.min(beta, bestUtilityValue);
 						
+						
 					}
+					return bestChild;
 					
 				}
 				
@@ -147,7 +152,7 @@ public class AlphaBetaAgent extends ChessAgent
 	 * TODO: please set me! This is what we will use for your submission...you get to pick your own depth param!
 	 * You can also change this in the xml file, however if you don't provide one in the xml file we use this default value
 	 */
-	private static final int DEFAULTMAXDEPTH = 3;
+	private static final int DEFAULTMAXDEPTH = 2;
 
 	private final int maxDepth;
 	private final long maxPlaytimeInMS;
