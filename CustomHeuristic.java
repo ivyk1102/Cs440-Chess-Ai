@@ -21,6 +21,7 @@ import hw2.chess.game.piece.PieceType;
 import hw2.chess.game.planning.Planner;
 import hw2.chess.search.DFSTreeNode;
 import hw2.chess.utils.Coordinate;
+import hw2.chess.game.player.Player;
 
 public class CustomHeuristics
 {
@@ -36,6 +37,28 @@ public class CustomHeuristics
 			}
 			return numPiecesWeAreThreatening;
 		}
+		
+//		public static double weCheck(DFSTreeNode node)
+//		{
+//			// We check if in this state if the opponent is in check and if they are assign a high heuristic value
+//			Player EnemyPlayer = node.getGame().getOtherPlayer();
+//			Piece EnemyKing = node.getGame().getBoard().getPieces(EnemyPlayer, PieceType.KING).iterator().next();
+//			
+//			for(Piece enemyPiece : node.getGame().getBoard().getPieces(node.getGame().getOtherPlayer(player)))
+//			{
+//				for(Move captureMove : enemyPiece.getAllCaptureMoves(node.getGame()))
+//				{
+//					if(((CaptureMove)captureMove).getTargetPieceID() == EnemyKing.getPieceID() &&
+//							((CaptureMove)captureMove).getTargetPlayer() == EnemyPlayer)
+//					{
+//						return 30.0;
+//					}
+//				}
+//			}
+//			
+//			return 0.0;
+//				
+//		}
 
 	}
 
@@ -112,6 +135,8 @@ public class CustomHeuristics
 		}
 		// offense can typically include the number of pieces that our pieces are currently threatening
 		int numPiecesWeAreThreatening = OffensiveHeuristics.getNumberOfPiecesWeAreThreatening(node);
+		
+//		double weCheck = OffensiveHeuristics.weCheck(node);
 
 		return damageDealtInThisNode + numPiecesWeAreThreatening;
 	}
@@ -148,36 +173,36 @@ public class CustomHeuristics
 		return multiPieceValueTotal;
 	}
 	
-	public static double piecesWeThreaten(DFSTreeNode node)
-	{
-		/*** Higher heuristic value if we are threatening more valuable pieces
-		 *   For Ex:
-		 *   	Pawn: 1
-		 *   	Bishop/Knight: 3
-		 *   	Rook: 5
-		 *   	Queen: 9
-		 */
-		
-		// Create a list of capture moves and then go through each
-		
-		List<Move> captureMove;
-		
-		for(Piece piece : node.getGame().getBoard().getPieces(node.getGame().getCurrentPlayer()))
-		{
-			captureMove = piece.getAllCaptureMoves(node.getGame());
-			System.out.println(captureMove);
-			CaptureMove(attkPieceID=8, attkPlayer=Player(type=BLACK, id=0), tgtPieceID=15, tgtPlayer=Player(type=WHITE, id=1))] // this is what gets printed, now we need targetPieceID
-					// CaptureMove class has get targetId
-					// after we get pieceId how do we get the pieceType???
-		}
-		
-		
-		return 0.0;
-		
-		
-		
-		
-	}
+//	public static double piecesWeThreaten(DFSTreeNode node)
+//	{
+//		/*** Higher heuristic value if we are threatening more valuable pieces
+//		 *   For Ex:
+//		 *   	Pawn: 1
+//		 *   	Bishop/Knight: 3
+//		 *   	Rook: 5
+//		 *   	Queen: 9
+//		 */
+//		
+//		// Create a list of capture moves and then go through each
+//		
+//		List<Move> captureMove;
+//		
+//		for(Piece piece : node.getGame().getBoard().getPieces(node.getGame().getCurrentPlayer()))
+//		{
+//			captureMove = piece.getAllCaptureMoves(node.getGame());
+//			System.out.println(captureMove);
+//			CaptureMove(attkPieceID=8, attkPlayer=Player(type=BLACK, id=0), tgtPieceID=15, tgtPlayer=Player(type=WHITE, id=1))] // this is what gets printed, now we need targetPieceID
+//					// CaptureMove class has get targetId
+//					// after we get pieceId how do we get the pieceType???
+//		}
+//		
+//		
+//		return 0.0;
+//		
+//		
+//		
+//		
+//	}
 	
 	
 	public static double piecesWeControl(DFSTreeNode node)
@@ -338,72 +363,36 @@ public class CustomHeuristics
 	
 	public static double pieceDevelopment(DFSTreeNode node) {
 	    /**
-	     * Evaluates how well pieces are developed and encourages piece development
+	     * Evaluates if a piece has moved yet and if we have more pieces moved than our opponent we add points to our state
 	     */
-	    double value = 0.0;
+	    
+	    double weMoved = 0.0;
+	    double opponentMoved = 0.0;
+	    
 
 	    Set<Piece> ourPieces = node.getGame().getBoard().getPieces(node.getGame().getCurrentPlayer());
-	    Set<Coordinate> pawnStarting = new HashSet<>((Arrays.asList(
-	            new Coordinate(1, 2),
-	            new Coordinate(2, 2),
-	            new Coordinate(3, 2),
-	            new Coordinate(4, 2),
-	            new Coordinate(5, 2),
-	            new Coordinate(6, 2),
-	            new Coordinate(7, 2),
-	            new Coordinate(8, 2)
-	            )));
-
-	    for (Piece piece : ourPieces) {
-	        Coordinate piecePos = node.getGame().getCurrentPosition(piece);
-	        PieceType currentPieceType = piece.getType();
-	        int x = piecePos.getXPosition();
-	        int y = piecePos.getYPosition();
-	        if (piecePos != null) {
-	        	switch(currentPieceType)
-	        	{
-	        	case PAWN:
-	        		if (pawnStarting.contains(piecePos)) {
-	                    value -= 1.0;
-	                } else {
-	                    value += 1.0;
-	                }
-	        		break;
-	        	case KNIGHT:
-	                if ((x == 5 && y == 1)|| (x == 7 && y == 1)) {
-	                    value -= 1.0;
-	                } else {
-	                    value += 1.0;
-	                }
-	                break;
-	            case BISHOP:
-	                if ((x == 3 && y == 1)|| (x == 6 && y == 1)) {
-	                    value -= 1.0;
-	                } else {
-	                    value += 1.0;
-	                }
-	                break;
-	            case ROOK:
-	                if ((x == 1 && y == 8)|| (x == 8 && y == 8)) {
-	                    value -= 1.0;
-	                } else {
-	                    value += 1.0;
-	                }
-	                break;
-	            case QUEEN:
-	                if (x == 4 && y == 1) {
-	                    value -= 1.0;
-	                } else {
-	                    value += 1.0;
-	                }
-	                break;
-	            case KING:
-	                break;
-	        	}
-	        
-	        }
+	    Set<Piece> opponentPieces = node.getGame().getBoard().getPieces(node.getGame().getOtherPlayer());
+	    Player Enemy = node.getGame().getOtherPlayer();
+	    Player Us = node.getGame().getCurrentPlayer();
+	    
+	    for (Piece piece: ourPieces)
+	    {
+	    	List<Move> PieceMoved = node.getGame().getAllMovesForPiece(Us, piece);
+	    	if (PieceMoved.isEmpty() == false) {
+	    		weMoved += 1.0;
+	    	}
 	    }
-
+	    
+	    for (Piece piece: opponentPieces)
+	    {
+	    	List<Move> PieceMoved = node.getGame().getAllMovesForPiece(Enemy, piece);
+	    	if (PieceMoved.isEmpty() == false) {
+	    		opponentMoved += 1.0;
+	    	}
+	    }
+	    
+	    double value = weMoved - opponentMoved;
+	    
 	    return value;
 	
 	}
@@ -415,7 +404,7 @@ public class CustomHeuristics
 		double nonlinearHeuristicValue = getNonlinearPieceCombinationHeuristicValue(node);
 
 		
-		return offenseHeuristicValue + defenseHeuristicValue + nonlinearHeuristicValue + centerControl(node) + piecesWeControl(node) + piecesWeThreaten(node);
+		return offenseHeuristicValue + defenseHeuristicValue + nonlinearHeuristicValue + centerControl(node) + piecesWeControl(node) + pieceDevelopment(node);
 	}
 
 }
