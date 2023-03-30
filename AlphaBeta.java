@@ -63,26 +63,26 @@ public class AlphaBetaAgent extends ChessAgent
 			// for getting your alpha-beta pruning down, I would recommend using my default heuristics first
 			// and then
 			DFSTreeNode bestChild = null;
-			
+
 			if (node.isTerminal()) // terminal state!
 			{
 				bestChild = node;
-				
+
 			} else if (depth <= 0) // reached the bottom!
 			{
 				node.setMaxPlayerUtilityValue(CustomHeuristics.getMaxPlayerHeuristicValue(node));
 				bestChild = node;
-			} else // get the children of this  
+			} else // get the children of this
 			{
 				List<DFSTreeNode> children = node.getChildren();
 				children = CustomMoveOrderer.order(children);
-				
+
 				double bestUtilityValue;
-				
-				if(node.getType() == DFSTreeNodeType.MAX) // Max player 
+
+				if(node.getType() == DFSTreeNodeType.MAX) // Max player
 				{
 					bestUtilityValue = Double.NEGATIVE_INFINITY;
-					
+
 					for (DFSTreeNode child : children) {
 						child.setMaxPlayerUtilityValue(alphaBetaSearch(child, depth - 1, alpha, beta).getMaxPlayerUtilityValue());
 						double childValue = child.getMaxPlayerUtilityValue();
@@ -90,24 +90,24 @@ public class AlphaBetaAgent extends ChessAgent
 							bestUtilityValue = childValue;
 							bestChild = child;
 						}
-						
+
 						if (bestUtilityValue >= beta) { // Prune tree
 							break;
 						}
-						
+
 						alpha = Math.max(alpha, bestUtilityValue);
-						
-					
-						
+
+
+
 					}
-					
+
 					return bestChild;
-				
-					
+
+
 				} else // Min player
 				{
 					bestUtilityValue = Double.POSITIVE_INFINITY;
-					
+
 					for (DFSTreeNode child : children) {
 						child.setMaxPlayerUtilityValue(alphaBetaSearch(child, depth - 1, alpha, beta).getMaxPlayerUtilityValue());
 						double childValue = child.getMaxPlayerUtilityValue();
@@ -115,22 +115,22 @@ public class AlphaBetaAgent extends ChessAgent
 							bestUtilityValue = childValue;
 							bestChild = child;
 						}
-						
+
 						if (bestUtilityValue <= alpha) { // Prune tree
 							break;
 						}
-						
+
 						beta = Math.min(beta, bestUtilityValue);
-						
-						
+
+
 					}
 					return bestChild;
-					
+
 				}
-				
+
 			}
-			
-			
+
+
 			return bestChild;
 		}
 
@@ -146,7 +146,7 @@ public class AlphaBetaAgent extends ChessAgent
 
 			return new Pair<Move, Long>(move, (long)((endTime-startTime)/1000000));
 		}
-		
+
 	}
 
 	private static final long serialVersionUID = -8325987205183244708L;
@@ -155,7 +155,7 @@ public class AlphaBetaAgent extends ChessAgent
 	 * TODO: please set me! This is what we will use for your submission...you get to pick your own depth param!
 	 * You can also change this in the xml file, however if you don't provide one in the xml file we use this default value
 	 */
-	private static final int DEFAULTMAXDEPTH = 3;
+	private static final int DEFAULTMAXDEPTH = 2;
 
 	private final int maxDepth;
 	private final long maxPlaytimeInMS;
@@ -306,7 +306,7 @@ public class AlphaBetaAgent extends ChessAgent
 	 * This is the middlestep. Here we only do something if it is our turn to play (synchronized by a singleton).
 	 * When it is our turn, we can either end the game (by killing all of our remaining pieces) if we are in a terminal state,
 	 * OR have to deal with an action.
-	 * 
+	 *
 	 * Chess moves boil down into multiple SEPIA actions, so we only want to generate a new chess move IFF all of the SEPIA actions
 	 * from the previous move have completed (or if there was no previous move). This state machine is controlled by a Planner singleton
 	 * to keep everying in one place. We can either submit a new chess move (which we spend time to calculate) to the planner OR
@@ -330,7 +330,7 @@ public class AlphaBetaAgent extends ChessAgent
 				{
 					Move move = this.getChessMove(state);
 					// System.out.println("AlphaBetaAgent.middleStep [INFO] selected move=" + move);
-		
+
 					// System.out.println("AlphaBetaAgent.middleStep [INFO] getPlanner().canSubmitMove()=" + Planner.getPlanner().canSubmitMove());
 					if(Planner.getPlanner().canSubmitMove())
 					{

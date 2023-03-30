@@ -15,9 +15,11 @@ import hw2.chess.game.Board;
 import hw2.chess.game.Game;
 import hw2.chess.game.move.CaptureMove;
 import hw2.chess.game.move.Move;
+import hw2.chess.game.move.MoveType;
 import hw2.chess.game.move.PromotePawnMove;
 import hw2.chess.game.piece.Piece;
 import hw2.chess.game.piece.PieceType;
+import hw2.chess.game.piece.Queen;
 import hw2.chess.game.planning.Planner;
 import hw2.chess.search.DFSTreeNode;
 import hw2.chess.utils.Coordinate;
@@ -463,46 +465,83 @@ public class CustomHeuristics
 
 
 
-
 		return val;
 
 	}
 
-//	public static int IsolatedPawn(DFSTree Node) {
-//		int count = 0;
-//		Set<Piece> AllPawn = node.getGame().getBoard().getPieces(getMaxPlayer(node), PieceType.PAWN);
-//		Set<Piece> AlliedPiece = node.getGame().getBoard().getPieces(getMaxPlayer(node));
-//
-//		// Checks to see if we have isolated pawns (There are no allies in our adjacent left and right)
-//		for (Piece Pawn: AllPawn) { // Iterates through
-//			Coordinate PawnPos = node.getGame().getCurrentPosition(Pawn); // Gets position of current pawn
-//			// gets position of the left and right of the current pawn
-//			int Neighbor1 = PawnPos.getXPosition() - 1;
-//			int Neighbor2 = PawnPos.getXPosition() + 1;
-//			if (!node.getGame().getBoard().isPositionOccupied(Neighbor1) && // Both position near pawn is empty thus isolated
-//					!node.getGame().getBoard().isPositionOccupied(Neighbor2)) {
-//				count++;
-//			} else if (node.getGame().getBoard().isPositionOccupied(Neighbor1) || node.getGame().getBoard().isPositionOccupied(Neighbor2)) {
-//
-//			}
-//
-//
-//		}
-//
-//		return count;
-//	}
+	// Protect pieces, bishop protects knight
+	public static double pieceProtect(DFSTreeNode node) {
+		// Checks if a piece is currently protecting another piece we own
+
+		double val = 0;
+
+		Set<Piece> AllPieces = node.getGame().getBoard().getPieces(getMaxPlayer(node));
+		List<Move> AllMoves = new ArrayList<>();
+
+		for (Piece piece : AllPieces) {
+			PieceType pieceType = piece.getType();
+
+		}
+
+
+		return val;
+	}
+
+	public static double Castling(DFSTreeNode node) {
+		// Add points for castling
+		double val = 0;
+
+		if (node.getMove().getType() == MoveType.CASTLEMOVE) {
+			System.out.println("CASTLE");
+			val += 10000000.0;
+		}
+
+		return val;
+	}
+
+	public static double PawnChains(DFSTreeNode node) {
+		// Sees if there is a pawn diagonal of it and if there is then we add score cause we are protected
+		double val = 0.0;
+
+		Set<Piece> AllPawn = node.getGame().getBoard().getPieces(getMaxPlayer(node), PieceType.PAWN);
+
+		// Checks to see if we have isolated pawns (There are no allie pawns in our adjacent squares)
+		for (Piece Pawn: AllPawn) { // Iterates through
+			Coordinate PawnPos = node.getGame().getCurrentPosition(Pawn); // Gets position of current pawn
+			for (Direction direction : Direction.values()) { // Checks all direction near pawn
+				Coordinate neighborPosition = PawnPos.getNeighbor(direction);
+
+				if (node.getGame().getBoard().isInbounds(neighborPosition) &&
+						node.getGame().getBoard().isPositionOccupied(neighborPosition) && (direction == Direction.NORTHEAST
+						|| direction == Direction.NORTHWEST || direction == Direction.SOUTHEAST || direction == Direction.SOUTHWEST   ) ) // gets if current position is occupied
+				{
+					Piece piece = node.getGame().getBoard().getPieceAtPosition(neighborPosition);
+					if (piece != null && !Pawn.isEnemyPiece(piece)
+							&& piece.getType() == PieceType.PAWN) { // Checks if piece that occupies the position is an ally pawn
+						val += 0.5;
+					}
+				}
+			}
+		}
+
+		return val;
+	}
+
+	public static double doubledPawns(DFSTreeNode node) {
+		int val = 0;
+		return val;
+	}
 
 	public static double pawnStructure(DFSTreeNode node) {
 
 		double val = 0.0;
 
-		int doubledPawns, isolatedPawns, PawnChains;
+		double doubledPawns, PawnChains;
 
 
 
 
-
-		return val;
+		return PawnChains(node);
 	}
 
 	public static double getMaxPlayerHeuristicValue(DFSTreeNode node)
@@ -512,7 +551,8 @@ public class CustomHeuristics
 		double nonlinearHeuristicValue = getNonlinearPieceCombinationMaxPlayerHeuristicValue(node);
 
 		return offenseHeuristicValue + defenseHeuristicValue + nonlinearHeuristicValue + centerControl(node) +
-				piecesWeControl(node) + pieceDevelopment(node) + piecesWeThreaten(node) + pawnStructure(node);
+				piecesWeControl(node) + pieceDevelopment(node) + piecesWeThreaten(node)
+				+ pawnStructure(node) + pawnStructure(node) + pieceProtect(node);
 	}
 
 }
