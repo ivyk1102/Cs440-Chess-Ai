@@ -70,7 +70,7 @@ public class AlphaBetaAgent extends ChessAgent
 				
 			} else if (depth <= 0) // reached the bottom!
 			{
-				node.setMaxPlayerUtilityValue(CustomHeuristics.getHeuristicValue(node));
+				node.setMaxPlayerUtilityValue(CustomHeuristics.getMaxPlayerHeuristicValue(node));
 				bestChild = node;
 			} else // get the children of this  
 			{
@@ -155,7 +155,7 @@ public class AlphaBetaAgent extends ChessAgent
 	 * TODO: please set me! This is what we will use for your submission...you get to pick your own depth param!
 	 * You can also change this in the xml file, however if you don't provide one in the xml file we use this default value
 	 */
-	private static final int DEFAULTMAXDEPTH = 2;
+	private static final int DEFAULTMAXDEPTH = 3;
 
 	private final int maxDepth;
 	private final long maxPlaytimeInMS;

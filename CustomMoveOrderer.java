@@ -26,11 +26,11 @@ public class CustomMoveOrderer
 	public static boolean centerControl(DFSTreeNode node) // returns yes if the move we are making leads to higher center control than our opponent
 	{
 		double ourVal = CustomHeuristics.centerControl(node); // Our value for center control
-		
+
 		double OpponentValue = 0.0; // Opponent Value for center control
-		
-		Set<Piece> Pieces = node.getGame().getBoard().getPieces(node.getGame().getOtherPlayer()); 
-		
+
+		Set<Piece> Pieces = node.getGame().getBoard().getPieces(node.getGame().getOtherPlayer());
+
 		Set<Coordinate> OnePoint = new HashSet<>((Arrays.asList( // This is the coordinate for the ones with one points
 				new Coordinate(2, 2),
 				new Coordinate(2, 3),
@@ -52,9 +52,9 @@ public class CustomMoveOrderer
 				new Coordinate(4, 7),
 				new Coordinate(5, 7),
 				new Coordinate(6, 7)
-				))); 	
-		
-		
+		)));
+
+
 		Set<Coordinate> TwoPoint = new HashSet<>((Arrays.asList( // This is the coordinate for the ones with two points
 				new Coordinate(3, 3),
 				new Coordinate(3, 4),
@@ -68,26 +68,26 @@ public class CustomMoveOrderer
 				new Coordinate(6, 6),
 				new Coordinate(4, 6),
 				new Coordinate(5, 6)
-				
-				))); 
-		
+
+		)));
+
 		Set<Coordinate> ThreePoint = new HashSet<>((Arrays.asList( // This is the coordinate for the ones with three points
 				new Coordinate(5, 5),
-		        new Coordinate(5, 4),
-		        new Coordinate(4, 5),
-		        new Coordinate(4, 4)
-				))); 
-		
-		
+				new Coordinate(5, 4),
+				new Coordinate(4, 5),
+				new Coordinate(4, 4)
+		)));
+
+
 		for (Piece piece: Pieces) // We iterate through each piece and get their location and if the set contains that piece location then we add point accordingly
 		{
 			Coordinate piecePos = node.getGame().getCurrentPosition(piece);
-			
+
 //			System.out.println(piecePos + " Position of Piece");
 //			System.out.println(OnePoint.contains(piecePos) + " One point");
 //			System.out.println(TwoPoint.contains(piecePos) + " Two point");
 //			System.out.println(ThreePoint.contains(piecePos) + " Three point");
-			
+
 			if (OnePoint.contains(piecePos)) {
 				OpponentValue += 1.0;
 			} else if (TwoPoint.contains(piecePos)) {
@@ -96,61 +96,53 @@ public class CustomMoveOrderer
 				OpponentValue += 5.0;
 			}
 		}
-		System.out.println(ourVal + " Our Value");
-		System.out.println(OpponentValue + " Opponent Value");
-		
+
 		if (OpponentValue > ourVal) {
 			return false;
 		} else {
 			return true;
 		}
-		
-		
+
+
 	}
-	
-	
-	
+
+
+
 	public static List<DFSTreeNode> order(List<DFSTreeNode> nodes)
 	{
 		// please replace this!
-		
+
 		// Implement first case is controlling the board// by default get the CaptureMoves first
 		List<DFSTreeNode> moveOrder = new LinkedList<DFSTreeNode>();
-		List<DFSTreeNode> controlNodes = new LinkedList<DFSTreeNode>();
+
 		List<DFSTreeNode> captureNodes = new LinkedList<DFSTreeNode>();
 		List<DFSTreeNode> otherNodes = new LinkedList<DFSTreeNode>();
 
 		for(DFSTreeNode node : nodes)
 		{
-			if (centerControl(node) == true) {
+			if (node.getGame().isInCheck(CustomHeuristics.getMinPlayer(node))) { // Prioritizing checking the opponent the most
+				moveOrder.add(node);
+			} else if (centerControl(node)) { // Prioritize center control nodes
+				moveOrder.add(node);
+			}  else if (CustomHeuristics.piecesWeThreaten(node) >= 0.0) {
 				moveOrder.add(node);
 			}
-			
+
 			if (node.getMove().getType() == MoveType.CASTLEMOVE) {
-			    // Do something if the move is a castle move
+				// Do something if the move is a castle move
 			}
-			
+
+
 			if(node.getMove() != null)
-			{
-				switch(node.getMove().getType())
-				{
-				case CAPTUREMOVE:
-					captureNodes.add(node);
-					break;
-				default:
-					otherNodes.add(node);
-					break;
-				}
-			} else
 			{
 				otherNodes.add(node);
 			}
 		}
 
-		controlNodes.addAll(captureNodes);
-		controlNodes.addAll(otherNodes);
-		return controlNodes;
-	
+
+		moveOrder.addAll(otherNodes);
+		return moveOrder;
+
 	}
 
 }

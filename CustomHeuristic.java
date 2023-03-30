@@ -44,28 +44,27 @@ public class CustomHeuristics
 	{
 		return getMaxPlayer(node).equals(node.getGame().getCurrentPlayer()) ? node.getGame().getOtherPlayer() : node.getGame().getCurrentPlayer();
 	}
-	
-	
-	
+
+
+
 	public static class getOffensiveMaxPlayerHeuristicValue extends Object
 	{
 
 		public static double inCheck(DFSTreeNode node)
 		{
 			// We check if in this state if the opponent is in check and if they are assign a high heuristic value
-			
-			
+
+
 			Player EnemyPlayer = getMinPlayer(node);
-		
+
 			if (node.getGame().isInCheck(EnemyPlayer)) {
-				System.out.println("in Check");
-				return 20.0;
+				return 10.0;
 			}
-			
-			
+
+
 			return 0.0;
 
-			
+
 		}
 
 	}
@@ -132,7 +131,7 @@ public class CustomHeuristics
 			}
 			return numPiecesThreateningMaxPlayer;
 		}
-		
+
 	}
 
 	public static double getOffensiveMaxPlayerHeuristicValue(DFSTreeNode node)
@@ -144,17 +143,17 @@ public class CustomHeuristics
 
 		switch(node.getMove().getType())
 		{
-		case PROMOTEPAWNMOVE:
-			PromotePawnMove promoteMove = (PromotePawnMove)node.getMove();
-			damageDealtInThisNode += Piece.getPointValue(promoteMove.getPromotedPieceType());
-			break;
-		default:
-			break;
+			case PROMOTEPAWNMOVE:
+				PromotePawnMove promoteMove = (PromotePawnMove)node.getMove();
+				damageDealtInThisNode += Piece.getPointValue(promoteMove.getPromotedPieceType());
+				break;
+			default:
+				break;
 		}
 		// offense can typically include the number of pieces that our pieces are currently threatening
-		
+
 //		int numPiecesWeAreThreatening = OffensiveHeuristics.getNumberOfPiecesWeAreThreatening(node);
-		
+
 		double inCheck = getOffensiveMaxPlayerHeuristicValue.inCheck(node);
 
 		return damageDealtInThisNode + inCheck;
@@ -168,9 +167,10 @@ public class CustomHeuristics
 		// what is the state of the pieces next to the king? add up the values of the neighboring pieces
 		// positive value for friendly pieces and negative value for enemy pieces (will clamp at 0)
 		int kingSurroundingPiecesValueTotal = DefensiveHeuristics.getClampedPieceValueTotalSurroundingMaxPlayersKing(node);
-
 		// how many pieces are threatening us?
 		int numPiecesThreateningUs = DefensiveHeuristics.getNumberOfPiecesThreateningMaxPlayer(node);
+
+
 
 		return numPiecesAlive + kingSurroundingPiecesValueTotal - numPiecesThreateningUs;
 	}
@@ -191,7 +191,7 @@ public class CustomHeuristics
 
 		return multiPieceValueTotal;
 	}
-	
+
 	public static double piecesWeThreaten(DFSTreeNode node)
 	{
 		/*** Higher heuristic value if we are threatening more valuable pieces
@@ -201,33 +201,33 @@ public class CustomHeuristics
 		 *   	Rook: 5
 		 *   	Queen: 9
 		 */
-		
+
 		// Create a list of capture moves and then go through each
-		
+
 		double val = 0.0;
-		
+
 		HashMap<Integer, PieceType> OurMap = new HashMap<Integer, PieceType>();
 		HashMap<Integer, PieceType> enemyMap = new HashMap<Integer, PieceType>();
-		
-		
+
+
 		Set<Piece> OurPieces = node.getGame().getBoard().getPieces(getMaxPlayer(node));
 		Set<Piece> enemyPieces = node.getGame().getBoard().getPieces(getMinPlayer(node));
-		
+
 		for (Piece enemyPiece: enemyPieces) { // Putting into hashmap for enemy
 			int enemyPieceId = enemyPiece.getPieceID();
 			PieceType enemyPieceType = enemyPiece.getType();
 			enemyMap.put(enemyPieceId,enemyPieceType);
-			
+
 		}
-		
+
 		for (Piece OurPiece: OurPieces) { // Putting into hashmap for us
 			int OurPieceId = OurPiece.getPieceID();
 			PieceType OurPieceType = OurPiece.getType();
 			OurMap.put(OurPieceId,OurPieceType);
-			
+
 		}
-		
-		
+
+
 		for(Piece piece : node.getGame().getBoard().getPieces(getMaxPlayer(node)))
 		{
 			List<Move> captureMoves = piece.getAllCaptureMoves(node.getGame());
@@ -239,88 +239,88 @@ public class CustomHeuristics
 				val = Math.max(enemyPieceVal - ourPieceVal, val);
 			}
 		}
-		
-		
+
+
 		return val;
 
-		
+
 	}
-	
-	
+
+
 	public static double piecesWeControl(DFSTreeNode node)
 	{
 		// checks what how many piece we control and what type of pieces they are and compare them to our opponent
 		int opponentVal = 0;
 		int ourVal = 0;
-		
-		Set<Piece> OurPieces = node.getGame().getBoard().getPieces(getMaxPlayer(node)); 
+
+		Set<Piece> OurPieces = node.getGame().getBoard().getPieces(getMaxPlayer(node));
 		Set<Piece> OpponentPieces =node.getGame().getBoard().getPieces(getMinPlayer(node));
-		
-		for (Piece piece1: OurPieces) { // Loops through our pieces and see what type they are 
+
+		for (Piece piece1: OurPieces) { // Loops through our pieces and see what type they are
 			PieceType OurPieceType = piece1.getType();
 			switch(OurPieceType)
 			{
-			case PAWN:
-				ourVal += 1;
-				break;
-			case BISHOP:
-				ourVal += 3;
-				break;
-			case KNIGHT:
-				ourVal += 3;
-				break;
-			case QUEEN:
-				ourVal += 9;
-				break;
-			case ROOK:
-				ourVal += 5;
-				break;
-			case KING:
-				break;
+				case PAWN:
+					ourVal += 1;
+					break;
+				case BISHOP:
+					ourVal += 3;
+					break;
+				case KNIGHT:
+					ourVal += 3;
+					break;
+				case QUEEN:
+					ourVal += 9;
+					break;
+				case ROOK:
+					ourVal += 5;
+					break;
+				case KING:
+					break;
 			}
 		}
-		
-		for (Piece piece2: OpponentPieces) { // Loops through our pieces and see what type they are 
+
+		for (Piece piece2: OpponentPieces) { // Loops through our pieces and see what type they are
 			PieceType OpponentPieceType = piece2.getType();;
 			switch(OpponentPieceType)
 			{
-			case PAWN:
-				opponentVal += 1;
-				break;
-			case BISHOP:
-				opponentVal += 3;
-				break;
-			case KNIGHT:
-				opponentVal += 3;
-				break;
-			case QUEEN:
-				opponentVal += 9;
-				break;
-			case ROOK:
-				opponentVal += 5;
-				break;
-			case KING:
-				break;
+				case PAWN:
+					opponentVal += 1;
+					break;
+				case BISHOP:
+					opponentVal += 3;
+					break;
+				case KNIGHT:
+					opponentVal += 3;
+					break;
+				case QUEEN:
+					opponentVal += 9;
+					break;
+				case ROOK:
+					opponentVal += 5;
+					break;
+				case KING:
+					break;
 			}
 		}
-		
+
 		double val = ourVal - opponentVal;
-				
+
 		return val;
 	}
-	
-	
+
+
 	/**
 	 * TODO: implement me! The heuristics that I wrote are useful, but not very good for a good chessbot.
 	 * Please use this class to add your heuristics here! I recommend taking a look at the ones I provided for you
 	 * in DefaultHeuristics.java (which is in the same directory as this file)
 	 */
-	
+
 	public static double centerControl(DFSTreeNode node) {
 		/**
 		 * Checks player pieces and how close they are from the center and add points based on a square.
 		 * For example the points would be distributed as so:
-		 * 					0 0 0 0 0 0 0 0 
+		 * 					0 0 0 0 0 0 0 0
 		 * 					0 1 1 1 1 1 1 0
 		 * 					0 1 2 2 2 2 1 0
 		 * 					0 1 2 3 3 2 1 0
@@ -328,12 +328,12 @@ public class CustomHeuristics
 		 * 					0 1 2 2 2 2 1 0
 		 * 					0 1 1 1 1 1 1 0
 		 * 					0 0 0 0 0 0 0 0
-		 * 
+		 *
 		 */
 		double value = 0.0;
-				
-		Set<Piece> Pieces = node.getGame().getBoard().getPieces(getMaxPlayer(node)); 
-		
+
+		Set<Piece> Pieces = node.getGame().getBoard().getPieces(getMaxPlayer(node));
+
 		Set<Coordinate> OnePoint = new HashSet<>((Arrays.asList( // This is the coordinate for the ones with one points
 				new Coordinate(2, 2),
 				new Coordinate(2, 3),
@@ -355,9 +355,9 @@ public class CustomHeuristics
 				new Coordinate(4, 7),
 				new Coordinate(5, 7),
 				new Coordinate(6, 7)
-				))); 	
-		
-		
+		)));
+
+
 		Set<Coordinate> TwoPoint = new HashSet<>((Arrays.asList( // This is the coordinate for the ones with two points
 				new Coordinate(3, 3),
 				new Coordinate(3, 4),
@@ -371,26 +371,26 @@ public class CustomHeuristics
 				new Coordinate(6, 6),
 				new Coordinate(4, 6),
 				new Coordinate(5, 6)
-				
-				))); 
-		
+
+		)));
+
 		Set<Coordinate> ThreePoint = new HashSet<>((Arrays.asList( // This is the coordinate for the ones with three points
 				new Coordinate(5, 5),
-		        new Coordinate(5, 4),
-		        new Coordinate(4, 5),
-		        new Coordinate(4, 4)
-				))); 
-		
-		
+				new Coordinate(5, 4),
+				new Coordinate(4, 5),
+				new Coordinate(4, 4)
+		)));
+
+
 		for (Piece piece: Pieces) // We iterate through each piece and get their location and if the set contains that piece location then we add point accordingly
 		{
 			Coordinate piecePos = node.getGame().getCurrentPosition(piece);
-			
+
 //			System.out.println(piecePos + " Position of Piece");
 //			System.out.println(OnePoint.contains(piecePos) + " One point");
 //			System.out.println(TwoPoint.contains(piecePos) + " Two point");
 //			System.out.println(ThreePoint.contains(piecePos) + " Three point");
-			
+
 			if (OnePoint.contains(piecePos)) {
 				value += 1.0;
 			} else if (TwoPoint.contains(piecePos)) {
@@ -399,91 +399,120 @@ public class CustomHeuristics
 				value += 5.0;
 			}
 		}
-		
+
 		return value;
 	}
-	
+
 	public static double pieceDevelopment(DFSTreeNode node) {
-	    /**
-	     * Evaluates if a piece has moved yet and if we have more pieces moved than our opponent we add points to our state
-	     */
-	    
-	    double val = 0.0;
+		/**
+		 * Evaluates if a piece has moved yet and if we have more pieces moved than our opponent we add points to our state
+		 */
 
-	    
+		double val = 0.0;
 
-	    Set<Piece> ourPieces = node.getGame().getBoard().getPieces(getMaxPlayer(node));
-	    Player Us = node.getGame().getCurrentPlayer();
-	    
-	    for (Piece piece: ourPieces)
-	    {
-	    	
-	    	List<Move> PieceMoved= node.getGame().getAllMovesForPiece(Us, piece);
-	    	PieceType PieceType = piece.getType();
-	    	
-//	    	if (PieceMoved.isEmpty() == false) {
-//	    		val += 1;
-//	    	} else {
-//	    		val -= 1;
-//	    	}
-	    	
+		Set<Piece> ourPieces = node.getGame().getBoard().getPieces(getMaxPlayer(node));
+		Player Us = node.getGame().getCurrentPlayer();
+
+		for (Piece piece: ourPieces)
+		{
+
+			List<Move> PieceMoved= node.getGame().getAllMovesForPiece(Us, piece);
+			PieceType PieceType = piece.getType();
+
 			switch(PieceType)
 			{
-			case PAWN:
-				if (PieceMoved.isEmpty() == false) {
-		    		val += 1.0;
-		    	} else {
-		    		val -= 1.0;
-		    	}
-				break;
-			case BISHOP:
-				if (PieceMoved.isEmpty() == false) {
-		    		val += 3.0;
-		    	} else {
-		    		val -= 3.0;
-		    	}
-				break;
-			case KNIGHT:
-				if (PieceMoved.isEmpty() == false) {
-		    		val += 3.0;
-		    	} else {
-		    		val -= 3.0;
-		    	}
-				break;
-			case QUEEN:
-				if (PieceMoved.isEmpty() == false) {
-		    		val += 9.0;
-		    	} else {
-		    		val -= 9.0;
-		    	}
-				break;
-			case ROOK:
-				if (PieceMoved.isEmpty() == false) {
-		    		val += 5.0;
-		    	} else {
-		    		val -= 5.0;
-		    	}
-				break;
-			case KING:
-				break;
+				case PAWN:
+					if (PieceMoved.isEmpty() == false) {
+						val += 1.0;
+					} else {
+						val -= 1.0;
+					}
+					break;
+				case BISHOP:
+					if (PieceMoved.isEmpty() == false) {
+						val += 3.0;
+					} else {
+						val -= 3.0;
+					}
+					break;
+				case KNIGHT:
+					if (PieceMoved.isEmpty() == false) {
+						val += 3.0;
+					} else {
+						val -= 3.0;
+					}
+					break;
+				case QUEEN:
+					if (PieceMoved.isEmpty() == false) {
+						val += 9.0;
+					} else {
+						val -= 9.0;
+					}
+					break;
+				case ROOK:
+					if (PieceMoved.isEmpty() == false) {
+						val += 5.0;
+					} else {
+						val -= 5.0;
+					}
+					break;
+				case KING:
+					break;
 			}
-	    }
-	    
-	    
-	    
-	    
-	    return val;
-	
+		}
+
+
+
+
+		return val;
+
 	}
-	
+
+//	public static int IsolatedPawn(DFSTree Node) {
+//		int count = 0;
+//		Set<Piece> AllPawn = node.getGame().getBoard().getPieces(getMaxPlayer(node), PieceType.PAWN);
+//		Set<Piece> AlliedPiece = node.getGame().getBoard().getPieces(getMaxPlayer(node));
+//
+//		// Checks to see if we have isolated pawns (There are no allies in our adjacent left and right)
+//		for (Piece Pawn: AllPawn) { // Iterates through
+//			Coordinate PawnPos = node.getGame().getCurrentPosition(Pawn); // Gets position of current pawn
+//			// gets position of the left and right of the current pawn
+//			int Neighbor1 = PawnPos.getXPosition() - 1;
+//			int Neighbor2 = PawnPos.getXPosition() + 1;
+//			if (!node.getGame().getBoard().isPositionOccupied(Neighbor1) && // Both position near pawn is empty thus isolated
+//					!node.getGame().getBoard().isPositionOccupied(Neighbor2)) {
+//				count++;
+//			} else if (node.getGame().getBoard().isPositionOccupied(Neighbor1) || node.getGame().getBoard().isPositionOccupied(Neighbor2)) {
+//
+//			}
+//
+//
+//		}
+//
+//		return count;
+//	}
+
+	public static double pawnStructure(DFSTreeNode node) {
+
+		double val = 0.0;
+
+		int doubledPawns, isolatedPawns, PawnChains;
+
+
+
+
+
+		return val;
+	}
+
 	public static double getMaxPlayerHeuristicValue(DFSTreeNode node)
 	{
 		double offenseHeuristicValue = getOffensiveMaxPlayerHeuristicValue(node);
 		double defenseHeuristicValue = getDefensiveMaxPlayerHeuristicValue(node);
 		double nonlinearHeuristicValue = getNonlinearPieceCombinationMaxPlayerHeuristicValue(node);
-		
-		return offenseHeuristicValue + defenseHeuristicValue + nonlinearHeuristicValue + centerControl(node) + 
-				piecesWeControl(node) + pieceDevelopment(node) + piecesWeThreaten(node);
+
+		return offenseHeuristicValue + defenseHeuristicValue + nonlinearHeuristicValue + centerControl(node) +
+				piecesWeControl(node) + pieceDevelopment(node) + piecesWeThreaten(node) + pawnStructure(node);
 	}
-	
+
 }
