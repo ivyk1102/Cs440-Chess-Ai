@@ -18,6 +18,8 @@ import edu.cwru.sepia.environment.model.history.History.HistoryView;
 import edu.cwru.sepia.environment.model.state.State.StateView;
 import hw2.agents.heuristics.CustomHeuristics;
 import hw2.agents.heuristics.DefaultHeuristics;
+import hw2.agents.moveorder.CustomMoveOrderer;
+import hw2.agents.moveorder.DefaultMoveOrderer;
 import hw2.chess.agents.ChessAgent;
 import hw2.chess.game.Game;
 import hw2.chess.game.move.Move;
@@ -73,6 +75,7 @@ public class AlphaBetaAgent extends ChessAgent
 			} else // get the children of this  
 			{
 				List<DFSTreeNode> children = node.getChildren();
+				children = CustomMoveOrderer.order(children);
 				
 				double bestUtilityValue;
 				

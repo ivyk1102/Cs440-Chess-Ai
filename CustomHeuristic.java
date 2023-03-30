@@ -28,40 +28,35 @@ public class CustomHeuristics
 	public static class OffensiveHeuristics extends Object
 	{
 
-		public static int getNumberOfPiecesWeAreThreatening(DFSTreeNode node)
-		{
-			int numPiecesWeAreThreatening = 0;
-			for(Piece piece : node.getGame().getBoard().getPieces(node.getGame().getCurrentPlayer()))
-			{
-				numPiecesWeAreThreatening += piece.getAllCaptureMoves(node.getGame()).size();
-			}
-			return numPiecesWeAreThreatening;
-		}
+//		public static int getNumberOfPiecesWeAreThreatening(DFSTreeNode node)
+//		{
+//			int numPiecesWeAreThreatening = 0;
+//			for(Piece piece : node.getGame().getBoard().getPieces(node.getGame().getCurrentPlayer()))
+//			{
+//				numPiecesWeAreThreatening += piece.getAllCaptureMoves(node.getGame()).size();
+//			}
+//			return numPiecesWeAreThreatening;
+//		}
 		
-		public static double weCheck(DFSTreeNode node)
+		public static double inCheck(DFSTreeNode node)
 		{
 			// We check if in this state if the opponent is in check and if they are assign a high heuristic value
 			
 			boolean enemyIsInCheck = false;
 			
-			Player EnemyPlayer = node.getGame().getOtherPlayer();
-			Piece EnemyKing = node.getGame().getBoard().getPieces(EnemyPlayer, PieceType.KING).iterator().next();
 			
-			for(Piece enemyPiece : node.getGame().getBoard().getPieces(node.getGame().getOtherPlayer(EnemyPlayer)))
-			{
-				for(Move captureMove : enemyPiece.getAllCaptureMoves(node.getGame()))
-				{
-					if(((CaptureMove)captureMove).getTargetPieceID() == EnemyKing.getPieceID() &&
-							((CaptureMove)captureMove).getTargetPlayer() == EnemyPlayer)
-					{
-						enemyIsInCheck = true;
-						System.out.println("enemy is In Check");
-						
-					}
-				}
+			Player EnemyPlayer = node.getGame().getOtherPlayer();
+			Piece EnemyKing = node.getGame().getBoard().getPieces(EnemyPlayer, PieceType.KING).iterator().next(); // Gets the enemy King
+////			System.out.println(EnemyKing + " King ID");
+//			
+			if (node.getGame().isInCheck(EnemyPlayer)) {
+				System.out.println("ASDOJAISHDNIAHJSGDBAUISDHF");
+				return 200.0;
 			}
 			
+					
 			if (enemyIsInCheck) {
+				System.out.println("enemy is In Check");
 				return 15.0;
 			} 
 			
@@ -144,11 +139,12 @@ public class CustomHeuristics
 			break;
 		}
 		// offense can typically include the number of pieces that our pieces are currently threatening
-		int numPiecesWeAreThreatening = OffensiveHeuristics.getNumberOfPiecesWeAreThreatening(node);
 		
-		double weCheck = OffensiveHeuristics.weCheck(node);
+//		int numPiecesWeAreThreatening = OffensiveHeuristics.getNumberOfPiecesWeAreThreatening(node);
+		
+		double inCheck = OffensiveHeuristics.inCheck(node);
 
-		return damageDealtInThisNode + numPiecesWeAreThreatening + weCheck;
+		return damageDealtInThisNode + inCheck;
 	}
 
 	public static double getDefensiveHeuristicValue(DFSTreeNode node)
@@ -183,36 +179,59 @@ public class CustomHeuristics
 		return multiPieceValueTotal;
 	}
 	
-//	public static double piecesWeThreaten(DFSTreeNode node)
-//	{
-//		/*** Higher heuristic value if we are threatening more valuable pieces
-//		 *   For Ex:
-//		 *   	Pawn: 1
-//		 *   	Bishop/Knight: 3
-//		 *   	Rook: 5
-//		 *   	Queen: 9
-//		 */
-//		
-//		// Create a list of capture moves and then go through each
-//		
-//		List<Move> captureMove;
-//		
-//		for(Piece piece : node.getGame().getBoard().getPieces(node.getGame().getCurrentPlayer()))
-//		{
-//			captureMove = piece.getAllCaptureMoves(node.getGame());
-//			System.out.println(captureMove);
-//			CaptureMove(attkPieceID=8, attkPlayer=Player(type=BLACK, id=0), tgtPieceID=15, tgtPlayer=Player(type=WHITE, id=1))] // this is what gets printed, now we need targetPieceID
-//					// CaptureMove class has get targetId
-//					// after we get pieceId how do we get the pieceType???
-//		}
-//		
-//		
-//		return 0.0;
-//		
-//		
-//		
-//		
-//	}
+	public static double piecesWeThreaten(DFSTreeNode node)
+	{
+		/*** Higher heuristic value if we are threatening more valuable pieces
+		 *   For Ex:
+		 *   	Pawn: 1
+		 *   	Bishop/Knight: 3
+		 *   	Rook: 5
+		 *   	Queen: 9
+		 */
+		
+		// Create a list of capture moves and then go through each
+		
+		double val = 0.0;
+		
+		HashMap<Integer, PieceType> OurMap = new HashMap<Integer, PieceType>();
+		HashMap<Integer, PieceType> enemyMap = new HashMap<Integer, PieceType>();
+		
+		
+		Set<Piece> OurPieces = node.getGame().getBoard().getPieces(node.getGame().getOtherPlayer());
+		Set<Piece> enemyPieces = node.getGame().getBoard().getPieces(node.getGame().getOtherPlayer());
+		
+		for (Piece enemyPiece: enemyPieces) { // Putting into hashmap for enemy
+			int enemyPieceId = enemyPiece.getPieceID();
+			PieceType enemyPieceType = enemyPiece.getType();
+			enemyMap.put(enemyPieceId,enemyPieceType);
+			
+		}
+		
+		for (Piece OurPiece: OurPieces) { // Putting into hashmap for us
+			int OurPieceId = OurPiece.getPieceID();
+			PieceType OurPieceType = OurPiece.getType();
+			OurMap.put(OurPieceId,OurPieceType);
+			
+		}
+		
+		
+		for(Piece piece : node.getGame().getBoard().getPieces(node.getGame().getCurrentPlayer()))
+		{
+			List<Move> captureMoves = piece.getAllCaptureMoves(node.getGame());
+			PieceType currentPiece = piece.getType();
+			int ourPieceVal = Piece.getPointValue(currentPiece);
+			for (Move captureMove: captureMoves) {
+				PieceType pieceWeThreat = enemyMap.get(((CaptureMove)captureMove).getTargetPieceID());
+				int enemyPieceVal = Piece.getPointValue(pieceWeThreat);
+				val = Math.max(enemyPieceVal - ourPieceVal, val);
+			}
+		}
+		
+		
+		return val;
+
+		
+	}
 	
 	
 	public static double piecesWeControl(DFSTreeNode node)
@@ -323,7 +342,7 @@ public class CustomHeuristics
 				new Coordinate(4, 7),
 				new Coordinate(5, 7),
 				new Coordinate(6, 7)
-				))); 		
+				))); 	
 		
 		
 		Set<Coordinate> TwoPoint = new HashSet<>((Arrays.asList( // This is the coordinate for the ones with two points
@@ -362,9 +381,9 @@ public class CustomHeuristics
 			if (OnePoint.contains(piecePos)) {
 				value += 1.0;
 			} else if (TwoPoint.contains(piecePos)) {
-				value += 2.0;
-			} else if (ThreePoint.contains(piecePos)) {
 				value += 3.0;
+			} else if (ThreePoint.contains(piecePos)) {
+				value += 5.0;
 			}
 		}
 		
@@ -450,7 +469,8 @@ public class CustomHeuristics
 		double defenseHeuristicValue = getDefensiveHeuristicValue(node);
 		double nonlinearHeuristicValue = getNonlinearPieceCombinationHeuristicValue(node);
 		
-		return offenseHeuristicValue + defenseHeuristicValue + nonlinearHeuristicValue + centerControl(node) + piecesWeControl(node) + pieceDevelopment(node);
+		return offenseHeuristicValue + defenseHeuristicValue + nonlinearHeuristicValue + centerControl(node) + 
+				piecesWeControl(node) + pieceDevelopment(node) + piecesWeThreaten(node);
 	}
 	
 }
