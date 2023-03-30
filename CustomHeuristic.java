@@ -25,40 +25,43 @@ import hw2.chess.game.player.Player;
 
 public class CustomHeuristics
 {
-	public static class OffensiveHeuristics extends Object
+	/**
+	 * Get the max player from a node
+	 * @param node
+	 * @return
+	 */
+	public static Player getMaxPlayer(DFSTreeNode node)
+	{
+		return node.getMaxPlayer();
+	}
+
+	/**
+	 * Get the min player from a node
+	 * @param node
+	 * @return
+	 */
+	public static Player getMinPlayer(DFSTreeNode node)
+	{
+		return getMaxPlayer(node).equals(node.getGame().getCurrentPlayer()) ? node.getGame().getOtherPlayer() : node.getGame().getCurrentPlayer();
+	}
+	
+	
+	
+	public static class getOffensiveMaxPlayerHeuristicValue extends Object
 	{
 
-//		public static int getNumberOfPiecesWeAreThreatening(DFSTreeNode node)
-//		{
-//			int numPiecesWeAreThreatening = 0;
-//			for(Piece piece : node.getGame().getBoard().getPieces(node.getGame().getCurrentPlayer()))
-//			{
-//				numPiecesWeAreThreatening += piece.getAllCaptureMoves(node.getGame()).size();
-//			}
-//			return numPiecesWeAreThreatening;
-//		}
-		
 		public static double inCheck(DFSTreeNode node)
 		{
 			// We check if in this state if the opponent is in check and if they are assign a high heuristic value
 			
-			boolean enemyIsInCheck = false;
 			
-			
-			Player EnemyPlayer = node.getGame().getOtherPlayer();
-			Piece EnemyKing = node.getGame().getBoard().getPieces(EnemyPlayer, PieceType.KING).iterator().next(); // Gets the enemy King
-////			System.out.println(EnemyKing + " King ID");
-//			
+			Player EnemyPlayer = getMinPlayer(node);
+		
 			if (node.getGame().isInCheck(EnemyPlayer)) {
-				System.out.println("ASDOJAISHDNIAHJSGDBAUISDHF");
-				return 200.0;
+				System.out.println("in Check");
+				return 20.0;
 			}
 			
-					
-			if (enemyIsInCheck) {
-				System.out.println("enemy is In Check");
-				return 15.0;
-			} 
 			
 			return 0.0;
 
@@ -70,23 +73,33 @@ public class CustomHeuristics
 	public static class DefensiveHeuristics extends Object
 	{
 
-		public static int getNumberOfAlivePieces(DFSTreeNode node)
+		public static int getNumberOfMaxPlayersAlivePieces(DFSTreeNode node)
 		{
-			int numPiecesAlive = 0;
+			int numMaxPlayersPiecesAlive = 0;
 			for(PieceType pieceType : PieceType.values())
 			{
-				numPiecesAlive += node.getGame().getNumberOfAlivePieces(node.getGame().getCurrentPlayer(), pieceType);
+				numMaxPlayersPiecesAlive += node.getGame().getNumberOfAlivePieces(getMaxPlayer(node), pieceType);
 			}
-			return numPiecesAlive;
+			return numMaxPlayersPiecesAlive;
 		}
 
-		public static int getClampedPieceValueTotalSurroundingKing(DFSTreeNode node)
+		public static int getNumberOfMinPlayersAlivePieces(DFSTreeNode node)
+		{
+			int numMaxPlayersPiecesAlive = 0;
+			for(PieceType pieceType : PieceType.values())
+			{
+				numMaxPlayersPiecesAlive += node.getGame().getNumberOfAlivePieces(getMinPlayer(node), pieceType);
+			}
+			return numMaxPlayersPiecesAlive;
+		}
+
+		public static int getClampedPieceValueTotalSurroundingMaxPlayersKing(DFSTreeNode node)
 		{
 			// what is the state of the pieces next to the king? add up the values of the neighboring pieces
 			// positive value for friendly pieces and negative value for enemy pieces (will clamp at 0)
-			int kingSurroundingPiecesValueTotal = 0;
+			int maxPlayerKingSurroundingPiecesValueTotal = 0;
 
-			Piece kingPiece = node.getGame().getBoard().getPieces(node.getGame().getCurrentPlayer(), PieceType.KING).iterator().next();
+			Piece kingPiece = node.getGame().getBoard().getPieces(getMaxPlayer(node), PieceType.KING).iterator().next();
 			Coordinate kingPosition = node.getGame().getCurrentPosition(kingPiece);
 			for(Direction direction : Direction.values())
 			{
@@ -97,37 +110,37 @@ public class CustomHeuristics
 					int pieceValue = Piece.getPointValue(piece.getType());
 					if(piece != null && kingPiece.isEnemyPiece(piece))
 					{
-						kingSurroundingPiecesValueTotal -= pieceValue;
+						maxPlayerKingSurroundingPiecesValueTotal -= pieceValue;
 					} else if(piece != null && !kingPiece.isEnemyPiece(piece))
 					{
-						kingSurroundingPiecesValueTotal += pieceValue;
+						maxPlayerKingSurroundingPiecesValueTotal += pieceValue;
 					}
 				}
 			}
 			// kingSurroundingPiecesValueTotal cannot be < 0 b/c the utility of losing a game is 0, so all of our utility values should be at least 0
-			kingSurroundingPiecesValueTotal = Math.max(kingSurroundingPiecesValueTotal, 0);
-			return kingSurroundingPiecesValueTotal;
+			maxPlayerKingSurroundingPiecesValueTotal = Math.max(maxPlayerKingSurroundingPiecesValueTotal, 0);
+			return maxPlayerKingSurroundingPiecesValueTotal;
 		}
 
-		public static int getNumberOfPiecesThreateningUs(DFSTreeNode node)
+		public static int getNumberOfPiecesThreateningMaxPlayer(DFSTreeNode node)
 		{
 			// how many pieces are threatening us?
-			int numPiecesThreateningUs = 0;
-			for(Piece piece : node.getGame().getBoard().getPieces(node.getGame().getOtherPlayer()))
+			int numPiecesThreateningMaxPlayer = 0;
+			for(Piece piece : node.getGame().getBoard().getPieces(getMinPlayer(node)))
 			{
-				numPiecesThreateningUs += piece.getAllCaptureMoves(node.getGame()).size();
+				numPiecesThreateningMaxPlayer += piece.getAllCaptureMoves(node.getGame()).size();
 			}
-			return numPiecesThreateningUs;
+			return numPiecesThreateningMaxPlayer;
 		}
 		
 	}
 
-	public static double getOffensiveHeuristicValue(DFSTreeNode node)
+	public static double getOffensiveMaxPlayerHeuristicValue(DFSTreeNode node)
 	{
 		// remember the action has already taken affect at this point, so capture moves have already resolved
 		// and the targeted piece will not exist inside the game anymore.
 		// however this value was recorded in the amount of points that the player has earned in this node
-		double damageDealtInThisNode = node.getGame().getBoard().getPointsEarned(node.getGame().getCurrentPlayer());
+		double damageDealtInThisNode = node.getGame().getBoard().getPointsEarned(getMaxPlayer(node));
 
 		switch(node.getMove().getType())
 		{
@@ -142,27 +155,27 @@ public class CustomHeuristics
 		
 //		int numPiecesWeAreThreatening = OffensiveHeuristics.getNumberOfPiecesWeAreThreatening(node);
 		
-		double inCheck = OffensiveHeuristics.inCheck(node);
+		double inCheck = getOffensiveMaxPlayerHeuristicValue.inCheck(node);
 
 		return damageDealtInThisNode + inCheck;
 	}
 
-	public static double getDefensiveHeuristicValue(DFSTreeNode node)
+	public static double getDefensiveMaxPlayerHeuristicValue(DFSTreeNode node)
 	{
 		// how many pieces exist on our team?
-		int numPiecesAlive = DefensiveHeuristics.getNumberOfAlivePieces(node);
+		int numPiecesAlive = DefensiveHeuristics.getNumberOfMaxPlayersAlivePieces(node);
 
 		// what is the state of the pieces next to the king? add up the values of the neighboring pieces
 		// positive value for friendly pieces and negative value for enemy pieces (will clamp at 0)
-		int kingSurroundingPiecesValueTotal = DefensiveHeuristics.getClampedPieceValueTotalSurroundingKing(node);
+		int kingSurroundingPiecesValueTotal = DefensiveHeuristics.getClampedPieceValueTotalSurroundingMaxPlayersKing(node);
 
 		// how many pieces are threatening us?
-		int numPiecesThreateningUs = DefensiveHeuristics.getNumberOfPiecesThreateningUs(node);
+		int numPiecesThreateningUs = DefensiveHeuristics.getNumberOfPiecesThreateningMaxPlayer(node);
 
 		return numPiecesAlive + kingSurroundingPiecesValueTotal - numPiecesThreateningUs;
 	}
 
-	public static double getNonlinearPieceCombinationHeuristicValue(DFSTreeNode node)
+	public static double getNonlinearPieceCombinationMaxPlayerHeuristicValue(DFSTreeNode node)
 	{
 		// both bishops are worth more together than a single bishop alone
 		// same with knights...we want to encourage keeping pairs of elements
@@ -173,7 +186,7 @@ public class CustomHeuristics
 		// go over all the piece types that have more than one copy in the game (including pawn promotion)
 		for(PieceType pieceType : new PieceType[] {PieceType.BISHOP, PieceType.KNIGHT, PieceType.ROOK, PieceType.QUEEN})
 		{
-			multiPieceValueTotal += Math.pow(node.getGame().getNumberOfAlivePieces(node.getGame().getCurrentPlayer(), pieceType), exponent);
+			multiPieceValueTotal += Math.pow(node.getGame().getNumberOfAlivePieces(getMaxPlayer(node), pieceType), exponent);
 		}
 
 		return multiPieceValueTotal;
@@ -197,8 +210,8 @@ public class CustomHeuristics
 		HashMap<Integer, PieceType> enemyMap = new HashMap<Integer, PieceType>();
 		
 		
-		Set<Piece> OurPieces = node.getGame().getBoard().getPieces(node.getGame().getOtherPlayer());
-		Set<Piece> enemyPieces = node.getGame().getBoard().getPieces(node.getGame().getOtherPlayer());
+		Set<Piece> OurPieces = node.getGame().getBoard().getPieces(getMaxPlayer(node));
+		Set<Piece> enemyPieces = node.getGame().getBoard().getPieces(getMinPlayer(node));
 		
 		for (Piece enemyPiece: enemyPieces) { // Putting into hashmap for enemy
 			int enemyPieceId = enemyPiece.getPieceID();
@@ -215,7 +228,7 @@ public class CustomHeuristics
 		}
 		
 		
-		for(Piece piece : node.getGame().getBoard().getPieces(node.getGame().getCurrentPlayer()))
+		for(Piece piece : node.getGame().getBoard().getPieces(getMaxPlayer(node)))
 		{
 			List<Move> captureMoves = piece.getAllCaptureMoves(node.getGame());
 			PieceType currentPiece = piece.getType();
@@ -240,8 +253,8 @@ public class CustomHeuristics
 		int opponentVal = 0;
 		int ourVal = 0;
 		
-		Set<Piece> OurPieces = node.getGame().getBoard().getPieces(node.getGame().getCurrentPlayer()); 
-		Set<Piece> OpponentPieces =node.getGame().getBoard().getPieces(node.getGame().getOtherPlayer());
+		Set<Piece> OurPieces = node.getGame().getBoard().getPieces(getMaxPlayer(node)); 
+		Set<Piece> OpponentPieces =node.getGame().getBoard().getPieces(getMinPlayer(node));
 		
 		for (Piece piece1: OurPieces) { // Loops through our pieces and see what type they are 
 			PieceType OurPieceType = piece1.getType();
@@ -319,7 +332,7 @@ public class CustomHeuristics
 		 */
 		double value = 0.0;
 				
-		Set<Piece> Pieces = node.getGame().getBoard().getPieces(node.getGame().getCurrentPlayer()); 
+		Set<Piece> Pieces = node.getGame().getBoard().getPieces(getMaxPlayer(node)); 
 		
 		Set<Coordinate> OnePoint = new HashSet<>((Arrays.asList( // This is the coordinate for the ones with one points
 				new Coordinate(2, 2),
@@ -399,7 +412,7 @@ public class CustomHeuristics
 
 	    
 
-	    Set<Piece> ourPieces = node.getGame().getBoard().getPieces(node.getGame().getCurrentPlayer());
+	    Set<Piece> ourPieces = node.getGame().getBoard().getPieces(getMaxPlayer(node));
 	    Player Us = node.getGame().getCurrentPlayer();
 	    
 	    for (Piece piece: ourPieces)
@@ -463,11 +476,11 @@ public class CustomHeuristics
 	
 	}
 	
-	public static double getHeuristicValue(DFSTreeNode node)
+	public static double getMaxPlayerHeuristicValue(DFSTreeNode node)
 	{
-		double offenseHeuristicValue = getOffensiveHeuristicValue(node);
-		double defenseHeuristicValue = getDefensiveHeuristicValue(node);
-		double nonlinearHeuristicValue = getNonlinearPieceCombinationHeuristicValue(node);
+		double offenseHeuristicValue = getOffensiveMaxPlayerHeuristicValue(node);
+		double defenseHeuristicValue = getDefensiveMaxPlayerHeuristicValue(node);
+		double nonlinearHeuristicValue = getNonlinearPieceCombinationMaxPlayerHeuristicValue(node);
 		
 		return offenseHeuristicValue + defenseHeuristicValue + nonlinearHeuristicValue + centerControl(node) + 
 				piecesWeControl(node) + pieceDevelopment(node) + piecesWeThreaten(node);
