@@ -120,23 +120,26 @@ public class CustomMoveOrderer
 
 		for(DFSTreeNode node : nodes)
 		{
-			if (centerControl(node)) { // Prioritizing checking the opponent the most
-				moveOrder.add(node);
-			} else if (node.getGame().isInCheck(CustomHeuristics.getMinPlayer(node))) { // Prioritize center control nodes
-				moveOrder.add(node);
-			}  else if (CustomHeuristics.piecesWeThreaten(node) >= 0.0) {
-				moveOrder.add(node);
-			} else if (node.getMove().getType() == MoveType.CASTLEMOVE) {
-				// Do something if the move is a castle move
-				moveOrder.add(node);
-			}
-
-			if(node.getMove() != null)
-			{
+			if (node.getMove() != null) {
+				if (centerControl(node)) { // Prioritizing checking the opponent the most
+					moveOrder.add(node);
+				} else if (node.getGame().isInCheck(CustomHeuristics.getMinPlayer(node))) { // Prioritize center control nodes
+					moveOrder.add(node);
+				}  else if (CustomHeuristics.piecesWeThreaten(node) >= 0.0) {
+					moveOrder.add(node);
+				} else if (node.getMove().getType() == MoveType.CASTLEMOVE) {
+					// Do something if the move is a castle move
+					moveOrder.add(node);
+				} else {
+	
+				
+					otherNodes.add(node);
+				}
+				
+			} else {
 				otherNodes.add(node);
 			}
 		}
-
 
 		moveOrder.addAll(otherNodes);
 		return moveOrder;

@@ -2,9 +2,12 @@ package hw2.agents;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -19,7 +22,6 @@ import edu.cwru.sepia.environment.model.state.State.StateView;
 import hw2.agents.heuristics.CustomHeuristics;
 import hw2.agents.heuristics.DefaultHeuristics;
 import hw2.agents.moveorder.CustomMoveOrderer;
-import hw2.agents.moveorder.DefaultMoveOrderer;
 import hw2.chess.agents.ChessAgent;
 import hw2.chess.game.Game;
 import hw2.chess.game.move.Move;
@@ -27,32 +29,40 @@ import hw2.chess.game.planning.Planner;
 import hw2.chess.game.player.Player;
 import hw2.chess.game.player.PlayerType;
 import hw2.chess.search.DFSTreeNode;
-import hw2.chess.search.DFSTreeNodeType;
 import hw2.chess.streaming.Streamer;
 import hw2.chess.utils.Pair;
+import hw2.chess.search.DFSTreeNodeType;
 
 public class AlphaBetaAgent extends ChessAgent
 {
 
-	private class AlphaBetaSearcher extends Object implements Callable<Pair<Move, Long> >
-	{
+	private class AlphaBetaSearcher extends Object implements Callable<Pair<Move, Long>> {
 
 		private DFSTreeNode rootNode;
 		private final int maxDepth;
+		private final Stack<Pair<Move, Game> > history;
 
-		public AlphaBetaSearcher(DFSTreeNode rootNode, int maxDepth)
-		{
+		public AlphaBetaSearcher(DFSTreeNode rootNode, int maxDepth, Stack<Pair<Move, Game>> history) {
 			this.rootNode = rootNode;
 			this.maxDepth = maxDepth;
+			this.history = history;
 		}
 
-		public DFSTreeNode getRootNode() { return this.rootNode; }
-		public int getMaxDepth() { return this.maxDepth; }
+		public DFSTreeNode getRootNode() {
+			return this.rootNode;
+		}
+
+		public int getMaxDepth() {
+			return this.maxDepth;
+		}
+
+		public Stack<Pair<Move, Game> > getHistory() { return this.history; }
 
 		/**
-		 * TODO: implement me!
-		 * This method should perform alpha-beta search from the current node
-		 * @param node the node to perform the search on (i.e. the root of the subtree)
+		 * TODO: implement me! This method should perform alpha-beta search from the
+		 * current node
+		 * 
+		 * @param node  the node to perform the search on (i.e. the root of the subtree)
 		 * @param depth how far in the tree we are rn
 		 * @param alpha
 		 * @param beta
@@ -70,7 +80,7 @@ public class AlphaBetaAgent extends ChessAgent
 
 			} else if (depth <= 0) // reached the bottom!
 			{
-				node.setMaxPlayerUtilityValue(CustomHeuristics.getMaxPlayerHeuristicValue(node));
+				node.setMaxPlayerUtilityValue(CustomHeuristics.getMaxPlayerHeuristicValue(node, this.getHistory()));
 				bestChild = node;
 			} else // get the children of this
 			{
@@ -146,14 +156,14 @@ public class AlphaBetaAgent extends ChessAgent
 
 			return new Pair<Move, Long>(move, (long)((endTime-startTime)/1000000));
 		}
-
+		
 	}
 
 	private static final long serialVersionUID = -8325987205183244708L;
 
 	/**
 	 * TODO: please set me! This is what we will use for your submission...you get to pick your own depth param!
-	 * You can also change this in the xml file, however if you don't provide one in the xml file we use this default value
+	 * You can also change this is the xml file, however if you don't provide one in the xml file we use this default value
 	 */
 	private static final int DEFAULTMAXDEPTH = 2;
 
@@ -162,6 +172,8 @@ public class AlphaBetaAgent extends ChessAgent
 	private final PlayerType playerType;
 
 	private Player myPlayer;
+
+	private Stack<Pair<Move, Game> > history;
 
 	/**
 	 * The constructor. Please do not modify. This constructor will work for variable-sized program args
@@ -172,7 +184,7 @@ public class AlphaBetaAgent extends ChessAgent
 	{
 		super(playerID);
 		long maxPlaytimeInMS = 0;
-		int maxDepth = 10;
+		int maxDepth = 3;
 		String playerTypeString = null;
 		String filePath = null;
 		if(args.length == 3)
@@ -210,6 +222,7 @@ public class AlphaBetaAgent extends ChessAgent
 		this.maxPlaytimeInMS = maxPlaytimeInMS;
 		this.myPlayer = null;
 		this.setFilePath(filePath);
+		this.history = new Stack<Pair<Move, Game> >();
 
 		System.out.println("Constructed AlphaBetaAgent(teamColor=" + this.getPlayerType() + ", timeLimit(ms)=" + this.getMaxPlaytimeInMS() + ", maxDepth=" + this.getMaxDepth() + ")");
 	}
@@ -226,6 +239,8 @@ public class AlphaBetaAgent extends ChessAgent
 	@Override
 	protected Player getPlayer() { return this.myPlayer; }
 
+	private Stack<Pair<Move, Game> > getHistory() { return this.history; }
+
 	/**
 	 * This method is responsible for getting a chess move selected via the minimax algorithm.
 	 * There is some setup for this to work, namely making sure the agent doesn't run out of time.
@@ -241,7 +256,8 @@ public class AlphaBetaAgent extends ChessAgent
 		Move move = null;
 		long durationInMs = 0;
 		DFSTreeNode rootNode = new DFSTreeNode(Planner.getPlanner().getGame(), this.getPlayer());
-		AlphaBetaSearcher searcherObject = new AlphaBetaSearcher(rootNode, this.getMaxDepth()); // this obj will run in the background
+		AlphaBetaSearcher searcherObject = new AlphaBetaSearcher(rootNode, this.getMaxDepth(),
+				this.getHistory()); // this obj will run in the background
 
 		// submit the job
 		Future<Pair<Move, Long> > future = backgroundThreadManager.submit(searcherObject);
@@ -255,6 +271,8 @@ public class AlphaBetaAgent extends ChessAgent
 			// if we get here the move was chosen quick enough! :)
 			move = moveAndDuration.getFirst();
 			durationInMs = moveAndDuration.getSecond();
+
+			this.history.add(new Pair<Move, Game>(move, Planner.getPlanner().getGame()));
 
 			// convert the move into a text form (algebraic notation) and stream it somewhere
 			Streamer.getStreamer(this.getFilePath()).streamMove(move, Planner.getPlanner().getGame());
@@ -306,7 +324,7 @@ public class AlphaBetaAgent extends ChessAgent
 	 * This is the middlestep. Here we only do something if it is our turn to play (synchronized by a singleton).
 	 * When it is our turn, we can either end the game (by killing all of our remaining pieces) if we are in a terminal state,
 	 * OR have to deal with an action.
-	 *
+	 * 
 	 * Chess moves boil down into multiple SEPIA actions, so we only want to generate a new chess move IFF all of the SEPIA actions
 	 * from the previous move have completed (or if there was no previous move). This state machine is controlled by a Planner singleton
 	 * to keep everying in one place. We can either submit a new chess move (which we spend time to calculate) to the planner OR
@@ -330,7 +348,7 @@ public class AlphaBetaAgent extends ChessAgent
 				{
 					Move move = this.getChessMove(state);
 					// System.out.println("AlphaBetaAgent.middleStep [INFO] selected move=" + move);
-
+		
 					// System.out.println("AlphaBetaAgent.middleStep [INFO] getPlanner().canSubmitMove()=" + Planner.getPlanner().canSubmitMove());
 					if(Planner.getPlanner().canSubmitMove())
 					{
