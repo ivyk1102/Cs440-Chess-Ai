@@ -11,19 +11,24 @@ import java.util.*;
 
 import hw2.agents.heuristics.DefaultHeuristics.DefensiveHeuristics;
 import hw2.agents.heuristics.DefaultHeuristics.OffensiveHeuristics;
+import hw2.chess.game.history.History;
 import hw2.chess.game.Board;
 import hw2.chess.game.Game;
 import hw2.chess.game.move.CaptureMove;
 import hw2.chess.game.move.Move;
 import hw2.chess.game.move.MoveType;
+import hw2.chess.game.move.MovementMove;
 import hw2.chess.game.move.PromotePawnMove;
+import hw2.chess.game.piece.Pawn;
 import hw2.chess.game.piece.Piece;
 import hw2.chess.game.piece.PieceType;
 import hw2.chess.game.piece.Queen;
 import hw2.chess.game.planning.Planner;
 import hw2.chess.search.DFSTreeNode;
 import hw2.chess.utils.Coordinate;
+import hw2.chess.utils.Pair;
 import hw2.chess.game.player.Player;
+import hw2.chess.game.player.PlayerType;
 
 public class CustomHeuristics
 {
@@ -154,11 +159,9 @@ public class CustomHeuristics
 		}
 		// offense can typically include the number of pieces that our pieces are currently threatening
 
-//		int numPiecesWeAreThreatening = OffensiveHeuristics.getNumberOfPiecesWeAreThreatening(node);
-
 		double inCheck = getOffensiveMaxPlayerHeuristicValue.inCheck(node);
 
-		return damageDealtInThisNode + inCheck;
+		return damageDealtInThisNode;
 	}
 
 	public static double getDefensiveMaxPlayerHeuristicValue(DFSTreeNode node)
@@ -194,6 +197,18 @@ public class CustomHeuristics
 		return multiPieceValueTotal;
 	}
 
+	public static int getNumberOfPiecesMaxPlayerIsThreatening(DFSTreeNode node)
+	{
+
+		int numPiecesMaxPlayerIsThreatening = 0;
+		for(Piece piece : node.getGame().getBoard().getPieces(getMaxPlayer(node)))
+		{
+			numPiecesMaxPlayerIsThreatening += piece.getAllCaptureMoves(node.getGame()).size();
+		}
+		return numPiecesMaxPlayerIsThreatening;
+	}
+
+
 	public static double piecesWeThreaten(DFSTreeNode node)
 	{
 		/*** Higher heuristic value if we are threatening more valuable pieces
@@ -206,6 +221,87 @@ public class CustomHeuristics
 
 		// Create a list of capture moves and then go through each
 
+		double val = 0.0;
+
+		HashMap<Integer, PieceType> enemyMap = new HashMap<Integer, PieceType>();
+
+		Set<Piece> enemyPieces = node.getGame().getBoard().getPieces(getMinPlayer(node));
+
+		for (Piece enemyPiece: enemyPieces) { // Putting into hashmap for enemy
+			int enemyPieceId = enemyPiece.getPieceID();
+			PieceType enemyPieceType = enemyPiece.getType();
+			enemyMap.put(enemyPieceId,enemyPieceType);
+		}
+
+
+
+		for(Piece piece : node.getGame().getBoard().getPieces(getMaxPlayer(node)))
+		{
+			List<Move> captureMoves = piece.getAllCaptureMoves(node.getGame());
+			for (Move captureMove: captureMoves) {
+				PieceType pieceWeThreat = enemyMap.get(((CaptureMove)captureMove).getTargetPieceID());
+				int enemyPieceVal = Piece.getPointValue(pieceWeThreat);
+				val = Math.max(enemyPieceVal, val);
+
+
+			}
+		}
+
+
+
+		return val;
+
+
+	}
+
+	public static double pieceThatThreatUs(DFSTreeNode node) {
+		/*** Higher heuristic value if we are threatening more valuable pieces
+		 *   For Ex:
+		 *   	Pawn: 1
+		 *   	Bishop/Knight: 3
+		 *   	Rook: 5
+		 *   	Queen: 9
+		 */
+
+		// Create a list of capture moves and then go through each
+
+		double val = 0.0;
+
+		HashMap<Integer, PieceType> ourMap = new HashMap<Integer, PieceType>();
+
+		Set<Piece> ourPieces = node.getGame().getBoard().getPieces(getMaxPlayer(node));
+
+		for (Piece ourPiece: ourPieces) { // Putting into hashmap for us
+			int ourPieceId = ourPiece.getPieceID();
+			PieceType ourPieceType = ourPiece.getType();
+			ourMap.put(ourPieceId,ourPieceType);
+		}
+
+
+
+		for(Piece piece : node.getGame().getBoard().getPieces(getMinPlayer(node)))
+		{
+			List<Move> captureMoves = piece.getAllCaptureMoves(node.getGame());
+			for (Move captureMove: captureMoves) {
+				PieceType pieceThreat = ourMap.get(((CaptureMove)captureMove).getTargetPieceID());
+				int ourPieceVal = Piece.getPointValue(pieceThreat);
+				val = Math.max(ourPieceVal, val);
+
+
+			}
+		}
+
+
+
+		return val;
+
+
+	}
+
+
+
+	public static double pieceTrade(DFSTreeNode node) {
+		// This function returns a higher value if a piece we are capturing is more valuable than the piece we are using to capture it
 		double val = 0.0;
 
 		HashMap<Integer, PieceType> OurMap = new HashMap<Integer, PieceType>();
@@ -388,11 +484,6 @@ public class CustomHeuristics
 		{
 			Coordinate piecePos = node.getGame().getCurrentPosition(piece);
 
-//			System.out.println(piecePos + " Position of Piece");
-//			System.out.println(OnePoint.contains(piecePos) + " One point");
-//			System.out.println(TwoPoint.contains(piecePos) + " Two point");
-//			System.out.println(ThreePoint.contains(piecePos) + " Three point");
-
 			if (OnePoint.contains(piecePos)) {
 				value += 1.0;
 			} else if (TwoPoint.contains(piecePos)) {
@@ -405,98 +496,82 @@ public class CustomHeuristics
 		return value;
 	}
 
+
+	public static boolean hasMoved(Piece piece, DFSTreeNode node) {
+		// Lets us know if a piece has moved from it's starting position
+		boolean moved = true;
+
+		Coordinate currentPos = piece.getCurrentPosition(node.getGame().getBoard());
+
+		PieceType pieceType = piece.getType();
+
+		if (pieceType == PieceType.BISHOP) {
+			Player playerId = piece.getPlayer();
+			if (playerId.getPlayerType() == PlayerType.WHITE) {
+				return !(currentPos.equals(new Coordinate(3, 8)) || currentPos.equals(new Coordinate(6, 8)));
+			} else {
+				return !(currentPos.equals(new Coordinate(3, 1)) || currentPos.equals(new Coordinate(6, 1)));
+			}
+		} else if (pieceType == PieceType.KNIGHT) {
+			Player playerId = piece.getPlayer();
+			if (playerId.getPlayerType() == PlayerType.WHITE) {
+				return !(currentPos.equals(new Coordinate(2, 8)) || currentPos.equals(new Coordinate(7, 8)));
+			} else {
+				return !(currentPos.equals(new Coordinate(2, 1)) || currentPos.equals(new Coordinate(7, 1)));
+			}
+		} else if (pieceType == PieceType.QUEEN) {
+			Player playerId = piece.getPlayer();
+			if (playerId.getPlayerType() == PlayerType.WHITE) {
+				return !(currentPos.equals(new Coordinate(4, 8)));
+			} else {
+				return !(currentPos.equals(new Coordinate(4, 1)));
+			}
+
+		}
+//		else if (pieceType == PieceType.PAWN) {
+//			Player playerId = piece.getPlayer();
+//			if (playerId.getPlayerType() == PlayerType.WHITE) {
+//				int pawnRow = node.getGame().getBoard().getPawnStartingRowIdx(playerId);
+//				if (currentPos.getYPosition() == pawnRow) {
+//					return false;
+//				}
+//			} else {
+//				int pawnRow = node.getGame().getBoard().getPawnStartingRowIdx(playerId);
+//				if (currentPos.getYPosition() == pawnRow) {
+//					return false;
+//				}
+//			}
+//		}
+
+
+
+
+		return moved;
+	}
+
+
+
 	public static double pieceDevelopment(DFSTreeNode node) {
 		/**
-		 * Evaluates if a piece has moved yet and if we have more pieces moved than our opponent we add points to our state
+		 * Evaluates if a piece has moved yet and if it hasn't then we want it to move
 		 */
 
 		double val = 0.0;
 
 		Set<Piece> ourPieces = node.getGame().getBoard().getPieces(getMaxPlayer(node));
-		Player Us = node.getGame().getCurrentPlayer();
 
-		for (Piece piece: ourPieces)
-		{
 
-			List<Move> PieceMoved= node.getGame().getAllMovesForPiece(Us, piece);
-			PieceType PieceType = piece.getType();
-
-			switch(PieceType)
-			{
-				case PAWN:
-					if (PieceMoved.isEmpty() == false) {
-						val += 1.0;
-					} else {
-						val -= 1.0;
-					}
-					break;
-				case BISHOP:
-					if (PieceMoved.isEmpty() == false) {
-						val += 3.0;
-					} else {
-						val -= 3.0;
-					}
-					break;
-				case KNIGHT:
-					if (PieceMoved.isEmpty() == false) {
-						val += 3.0;
-					} else {
-						val -= 3.0;
-					}
-					break;
-				case QUEEN:
-					if (PieceMoved.isEmpty() == false) {
-						val += 9.0;
-					} else {
-						val -= 9.0;
-					}
-					break;
-				case ROOK:
-					if (PieceMoved.isEmpty() == false) {
-						val += 5.0;
-					} else {
-						val -= 5.0;
-					}
-					break;
-				case KING:
-					break;
+		for (Piece piece : ourPieces) {
+			if (hasMoved(piece, node)) {
+				val += 1.0;
+			} else {
+				val -= 1.0;
 			}
 		}
 
 
-
 		return val;
 
-	}
-
-	// Protect pieces, bishop protects knight
-	public static double pieceProtect(DFSTreeNode node) {
-		// Checks if a piece is currently protecting another piece we own
-
-		double val = 0;
-
-		Set<Piece> AllPieces = node.getGame().getBoard().getPieces(getMaxPlayer(node));
-		List<Move> AllMoves = new ArrayList<>();
-
-		for (Piece piece : AllPieces) {
-			PieceType pieceType = piece.getType();
-
-		}
-
-
-		return val;
-	}
-
-	public static double Castling(DFSTreeNode node) {
-		// Add points for castling
-		double val = 0;
-
-		if (node.getMove().getType() == MoveType.CASTLEMOVE) {
-			System.out.println("CASTLE");
-			val += 10000000.0;
-		}
-
-		return val;
 	}
 
 	public static double PawnChains(DFSTreeNode node) {
@@ -518,7 +593,7 @@ public class CustomHeuristics
 					Piece piece = node.getGame().getBoard().getPieceAtPosition(neighborPosition);
 					if (piece != null && !Pawn.isEnemyPiece(piece)
 							&& piece.getType() == PieceType.PAWN) { // Checks if piece that occupies the position is an ally pawn
-						val += 0.5;
+						val += 1;
 					}
 				}
 			}
@@ -528,31 +603,66 @@ public class CustomHeuristics
 	}
 
 	public static double doubledPawns(DFSTreeNode node) {
+		// If there is a pawm that is in the same coloumn as another pawn; minus points
 		int val = 0;
+
+		Set<Piece> AllPawn = node.getGame().getBoard().getPieces(getMaxPlayer(node), PieceType.PAWN);
+
+		for (Piece Pawn : AllPawn) { // Iterates through
+			Coordinate PawnPos = node.getGame().getCurrentPosition(Pawn); // Gets position of current pawn
+			for (Direction direction : Direction.values()) { // Checks all direction near pawn
+				Coordinate neighborPosition = PawnPos.getNeighbor(direction);
+
+				if (node.getGame().getBoard().isInbounds(neighborPosition) &&
+						node.getGame().getBoard().isPositionOccupied(neighborPosition) && (direction == Direction.NORTH
+						|| direction == Direction.SOUTH)) // gets if current position is occupied
+				{
+					Piece piece = node.getGame().getBoard().getPieceAtPosition(neighborPosition);
+					if (piece != null && !Pawn.isEnemyPiece(piece)
+							&& piece.getType() == PieceType.PAWN) { // Checks if piece that occupies the position is an ally pawn
+						val -= 1;
+					}
+				}
+			}
+
+		}
 		return val;
 	}
 
+
 	public static double pawnStructure(DFSTreeNode node) {
 
-		double val = 0.0;
+		return PawnChains(node) + doubledPawns(node);
 
-		double doubledPawns, PawnChains;
-
-
-
-
-		return PawnChains(node);
 	}
 
-	public static double getMaxPlayerHeuristicValue(DFSTreeNode node)
+	public static double alreadyHere(DFSTreeNode node, Stack<Pair<Move, Game>> history) {
+		History his = History.getHistory();
+
+		if (!history.isEmpty() && history.size() > 4) {
+			Move latestMove = his.getPastMove(his.size()-2); // Gets last move by you
+			Move TwoMovesAgo = his.getPastMove(his.size()-4); // Gets second to last move by you
+
+			HashMap<Move, Integer> last2 = new HashMap<Move, Integer>(); // Set of latest 2 moves
+			last2.put(latestMove, 0);
+			last2.put(TwoMovesAgo, 0);
+
+
+
+		}
+
+		return 0.0;
+	}
+
+	public static double getMaxPlayerHeuristicValue(DFSTreeNode node, Stack<Pair<Move, Game>> History)
 	{
 		double offenseHeuristicValue = getOffensiveMaxPlayerHeuristicValue(node);
 		double defenseHeuristicValue = getDefensiveMaxPlayerHeuristicValue(node);
 		double nonlinearHeuristicValue = getNonlinearPieceCombinationMaxPlayerHeuristicValue(node);
 
 		return offenseHeuristicValue + defenseHeuristicValue + nonlinearHeuristicValue + centerControl(node) +
-				piecesWeControl(node) + pieceDevelopment(node) + piecesWeThreaten(node)
-				+ pawnStructure(node) + pawnStructure(node) + pieceProtect(node);
+				piecesWeControl(node) + pieceDevelopment(node) + piecesWeThreaten(node) + pawnStructure(node)
+				+ pieceTrade(node) + alreadyHere(node, History);
 	}
 
 }

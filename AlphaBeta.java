@@ -61,7 +61,7 @@ public class AlphaBetaAgent extends ChessAgent
 		/**
 		 * TODO: implement me! This method should perform alpha-beta search from the
 		 * current node
-		 * 
+		 *
 		 * @param node  the node to perform the search on (i.e. the root of the subtree)
 		 * @param depth how far in the tree we are rn
 		 * @param alpha
@@ -156,7 +156,7 @@ public class AlphaBetaAgent extends ChessAgent
 
 			return new Pair<Move, Long>(move, (long)((endTime-startTime)/1000000));
 		}
-		
+
 	}
 
 	private static final long serialVersionUID = -8325987205183244708L;
@@ -165,7 +165,7 @@ public class AlphaBetaAgent extends ChessAgent
 	 * TODO: please set me! This is what we will use for your submission...you get to pick your own depth param!
 	 * You can also change this is the xml file, however if you don't provide one in the xml file we use this default value
 	 */
-	private static final int DEFAULTMAXDEPTH = 2;
+	private static final int DEFAULTMAXDEPTH =2;
 
 	private final int maxDepth;
 	private final long maxPlaytimeInMS;
@@ -324,7 +324,7 @@ public class AlphaBetaAgent extends ChessAgent
 	 * This is the middlestep. Here we only do something if it is our turn to play (synchronized by a singleton).
 	 * When it is our turn, we can either end the game (by killing all of our remaining pieces) if we are in a terminal state,
 	 * OR have to deal with an action.
-	 * 
+	 *
 	 * Chess moves boil down into multiple SEPIA actions, so we only want to generate a new chess move IFF all of the SEPIA actions
 	 * from the previous move have completed (or if there was no previous move). This state machine is controlled by a Planner singleton
 	 * to keep everying in one place. We can either submit a new chess move (which we spend time to calculate) to the planner OR
@@ -348,7 +348,7 @@ public class AlphaBetaAgent extends ChessAgent
 				{
 					Move move = this.getChessMove(state);
 					// System.out.println("AlphaBetaAgent.middleStep [INFO] selected move=" + move);
-		
+
 					// System.out.println("AlphaBetaAgent.middleStep [INFO] getPlanner().canSubmitMove()=" + Planner.getPlanner().canSubmitMove());
 					if(Planner.getPlanner().canSubmitMove())
 					{
