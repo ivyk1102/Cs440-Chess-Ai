@@ -11,9 +11,9 @@ import java.util.*;
 
 import hw2.agents.heuristics.DefaultHeuristics.DefensiveHeuristics;
 import hw2.agents.heuristics.DefaultHeuristics.OffensiveHeuristics;
-import hw2.chess.game.history.History;
 import hw2.chess.game.Board;
 import hw2.chess.game.Game;
+import hw2.chess.game.history.History;
 import hw2.chess.game.move.CaptureMove;
 import hw2.chess.game.move.Move;
 import hw2.chess.game.move.MoveType;
@@ -29,6 +29,7 @@ import hw2.chess.utils.Coordinate;
 import hw2.chess.utils.Pair;
 import hw2.chess.game.player.Player;
 import hw2.chess.game.player.PlayerType;
+import hw2.agents.TranspositionTable;
 
 public class CustomHeuristics
 {
@@ -636,110 +637,21 @@ public class CustomHeuristics
 
 	}
 
-	public static double alreadyHere2(DFSTreeNode node) {
-		History history = History.getHistory();
-		Game game = node.getGame();
-		// Gets the current game state of the said node
-		// Look at the history of all game states
-		System.out.println(game);
-
+	public static double alreadyHere(DFSTreeNode node, TranspositionTable table) {
+		String currentGame = TranspositionTable.GametoString(node.getGame());
+		
+		if (!table.isEmpty()) {
+			if (table.check(currentGame)) {
+				return -10.0;
+			}
+		}
+		
+		
 
 		// This state has not been visited, mark it as visited with a negative score
 		return 0.0;
 	}
-
-
-	public static double alreadyHere(DFSTreeNode node, Stack<Pair<Move, Game>> history) {
-		// If a move is a possible move then subtract points
-
-		History his = History.getHistory();
-
-		if (!history.isEmpty() && history.size() > 6) {
-			Move BlackLatestMove = his.getPastMove(his.size() - 2); // Gets black's latest move by you
-			Move BlacktwoMovesAgo = his.getPastMove(his.size() - 4); // Gets black's second to last move
-			Move BlackthreeMovesAgo = his.getPastMove(his.size() - 6);
-			Game BlacklastGame = his.getPastGame(his.size() - 2);
-			Game BlacktwoGamesAgo = his.getPastGame(his.size() - 4);
-			Move WhiteLatestMove = his.getPastMove(his.size() - 1); // White's Latest Move
-			Move WhitetwoMovesAgo = his.getPastMove(his.size() - 3); // White's Latest Move
-			Move WhitethreeMovesAgo = his.getPastMove(his.size() - 5);
-			Game WhitelastGame = his.getPastGame(his.size() - 1);
-			Game WhitetwoGamesAgo = his.getPastGame(his.size() - 3);
-			Game WhitethreeGamesAgo = his.getPastGame(his.size() - 5);
-
-			System.out.println(WhiteLatestMove.equals(WhitethreeMovesAgo) + " AISJDHBSIAUDHA");
-			System.out.println(WhitelastGame.equals(WhitethreeGamesAgo));
-
-			System.out.println(WhiteLatestMove + " Latest Move");
-			System.out.println(WhitetwoMovesAgo + " 2 Latest Move");
-			System.out.println(WhitethreeMovesAgo + " 3 moves Ago");
-
-			if (getMaxPlayer(node).getPlayerType() == PlayerType.BLACK) {
-				if (BlackLatestMove.equals(BlackthreeMovesAgo)) {
-					System.out.println("TESIOTJNAISUDH");
-				}
-			} else {
-				if (WhiteLatestMove.equals(WhitethreeMovesAgo)) {
-					System.out.println("TESIOTJNAISUDH");
-				}
-			}
-
-
-
-//			HashMap<Pair<Move, Game>, Integer> last2 = new HashMap<>(); // Set of latest 2 moves
-//			last2.put(FirstInstance, 0);
-//			last2.put(SecondInstance, 0);
-//
-//			Move move = node.getMove();
-//			Game game = node.getGame();
-//			Pair<Move, Game> possiMove = new Pair(move, game);
-//			if (last2.containsKey(possiMove)) {
-//				System.out.println("SADSAFFF");
-//			}
-//
-//			// Iterate through Hashmap and if hashmap has count of 2 then we return negative points
-//			for (Map.Entry<Pair<Move, Game>, Integer> entry : last2.entrySet()) {
-//				if (entry.getValue() > 2) {
-//					return -5.0; // or any negative points value you want to return
-//				}
-//			}
-
-
-//			HashMap<Move, Integer> last2 = new HashMap<Move, Integer>(); // Set of latest 2 moves
-//			last2.put(FirstInstance, 0);
-//			last2.put(SecondInstance, 0);
-//
-//
-//			System.out.println(last2);
-//			System.out.println(node.getGame().getCurrentPlayer() + " Current player");
-//			System.out.println(node.getMove().getActorPlayer() + " Person moving");
-//			System.out.println(getMinPlayer(node) + " Min Player");
-//			System.out.println(getMaxPlayer(node) + " Max player");
-//			if (node.getMove().getActorPlayer() == getMinPlayer(node)) {
-//				System.out.println(node.getMove() + " Move");
-//			}
-//
-//			if (last2.containsKey(node.getMove()))  {
-//				System.out.println("COPY");
-//				int count = last2.get(node.getMove()) + 1;
-//				last2.put(node.getMove(), count); // add + 1 to that move
-//			}
-
-			// Iterate through Hashmap and if hashmap has count of 2 then we return negative points
-//			for (Map.Entry<Move, Integer> entry : last2.entrySet()) {
-//				System.out.println(entry);
-//				if (entry.getValue() > 2) {
-//					return -5.0; // or any negative points value you want to return
-//				}
-//			}
-
-		}
-
-		return 0.0;
-	}
-
-
-	public static double getMaxPlayerHeuristicValue(DFSTreeNode node, Stack<Pair<Move, Game>> History)
+	public static double getMaxPlayerHeuristicValue(DFSTreeNode node, TranspositionTable table)
 	{
 		double offenseHeuristicValue = getOffensiveMaxPlayerHeuristicValue(node);
 		double defenseHeuristicValue = getDefensiveMaxPlayerHeuristicValue(node);
@@ -747,7 +659,7 @@ public class CustomHeuristics
 
 		return offenseHeuristicValue + defenseHeuristicValue + nonlinearHeuristicValue + centerControl(node) +
 				piecesWeControl(node) + pieceDevelopment(node) + piecesWeThreaten(node) + pawnStructure(node)
-				+ pieceTrade(node) + alreadyHere2(node);
+				+ pieceTrade(node) + alreadyHere(node, table);
 	}
 
 }

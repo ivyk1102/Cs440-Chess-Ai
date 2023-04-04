@@ -34,14 +34,14 @@ public class CustomMoveOrderer
 	};
 
 
-
-	static Comparator<DFSTreeNode> heuristicComparator = new Comparator<DFSTreeNode>() {
-		public int compare(DFSTreeNode node1, DFSTreeNode node2) {
-			double value1 = CustomHeuristics.getMaxPlayerHeuristicValue(node1, null);
-			double value2 = CustomHeuristics.getMaxPlayerHeuristicValue(node2, null);
-			return Double.compare(value2, value1); // sort in descending order
-		}
-	};
+//
+//	static Comparator<DFSTreeNode> heuristicComparator = new Comparator<DFSTreeNode>() {
+//		public int compare(DFSTreeNode node1, DFSTreeNode node2) {
+//			double value1 = CustomHeuristics.getMaxPlayerHeuristicValue(node1, TranspositionTable table);
+//			double value2 = CustomHeuristics.getMaxPlayerHeuristicValue(node2, TranspositionTable table);
+//			return Double.compare(value2, value1); // sort in descending order
+//		}
+//	};
 	
 	public static List<DFSTreeNode> order(List<DFSTreeNode> nodes)
 	{
@@ -90,11 +90,8 @@ public class CustomMoveOrderer
 		
 		}
 
-		captureNodes.sort(heuristicComparator);
 		moveOrder.addAll(captureNodes);
-		defendNodes.sort(heuristicComparator);
 		moveOrder.addAll(defendNodes);
-		otherNodes.sort(heuristicComparator);
 		moveOrder.addAll(otherNodes);
 		return moveOrder;
 
